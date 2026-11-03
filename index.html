@@ -648,9 +648,13 @@ function drawOverTime(dir) {
   if (m === "price") {
     const pr = (o) => (o.lb > 1000 ? o.usd / o.lb : null);
     const all = years.map((_, k) => sums.reduce((a, g) => ({ lb: a.lb + g[k].lb, usd: a.usd + g[k].usd }), { lb: 0, usd: 0 }));
+    // price lines tangle past three: the total and the two largest groups by pounds (Josh, 2026-11-03)
+    const lbOf = (g) => g.sum.reduce((a, o) => a + o.lb, 0);
+    const lines = st.by === "total" ? [] : used.filter((g, i) => i < named && lbOf(g) > 0).sort((a, b) => lbOf(b) - lbOf(a)).slice(0, 2);
+    if (lines.length) how = ` All ${w.noun} and the 2 largest ${st.by === "species" ? "species" : st.by === "region" ? "destination regions" : w.plural} since ${years[0]} by pounds.`;
     lineChart(host, { labels: ylabels, label, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: `All ${w.noun}`, cls: "s-avg", values: all.map(pr) },
-      ...(used.length > 1 ? used.map((g) => ({ name: g.name, cls: "s-now", color: g.color, values: g.sum.map(pr) })) : []),
+      ...lines.map((g) => ({ name: g.name, cls: "s-now", color: g.color, values: g.sum.map(pr) })),
     ] });
   } else {
     const pick = (o) => (m === "usd" ? o.usd : o.lb);

@@ -114,6 +114,7 @@ h3 { font: 700 18px/1.3 var(--body); margin: 0; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 @media (max-width: 640px) { .seg button { padding: 6px 9px; font-size: 13px; } }
 @media (max-width: 420px) { .seg button { padding: 6px 7px; font-size: 12.5px; } }
+@media (max-width: 340px) { .seg button { padding: 6px 5px; font-size: 12px; } }
 .btn { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
 .btn.alt { background: var(--surface); color: var(--ink); border: 1px solid var(--rule); }
 .btn:hover { filter: brightness(1.1); }
@@ -341,6 +342,7 @@ const yr = (i) => +D.months[i].slice(0, 4);
 const mo = (i) => +D.months[i].slice(5, 7) - 1;
 const mName = (i) => `${MONTH[mo(i)]} ${yr(i)}`;
 const mShort = (i) => `${MON[mo(i)]} ${yr(i)}`;
+const janTo = (m) => (m ? `January–${MONTH[m]}` : "January"), janToShort = (m) => (m ? `Jan–${MON[m]}` : "Jan");
 const SMALL = 10000;
 const breakIdx = (cats) => { const i = cats.indexOf(+(D.meta.censusFrom || "2012").slice(0, 4)); return i > 0 ? i : null; };
 const FILLETS_NOTE = "Before 2012, exports count fillets only; whole and dressed fish are counted from 2012.";           // prices resting on fewer pounds get a "few lb" flag
@@ -388,17 +390,17 @@ function period(st) {
   const L = N - 1, ly = yr(L), lm = mo(L);
   let cur, label;
   if (st.period === "latest") { cur = [L]; label = mName(L); }
-  else if (st.period === "ytd") { cur = range(L - lm, L); label = lm ? `January–${MONTH[lm]} ${ly}` : `January ${ly}`; }
+  else if (st.period === "ytd") { cur = range(L - lm, L); label = `${janTo(lm)} ${ly}`; }
   else if (st.period === "12m") { cur = range(L - 11, L); label = `12 months through ${mName(L)}`; }
   else {
     const y = st.year;
     cur = range(0, L).filter((i) => yr(i) === y);
-    label = y === ly && lm < 11 ? `${y} (January–${MONTH[lm]})` : String(y);
+    label = y === ly && lm < 11 ? `${y} (${janTo(lm)})` : String(y);
   }
   const prevIdx = cur.map((i) => i - 12);
   const prev = prevIdx[0] >= 0 ? prevIdx : null;
   const prevLabel = !prev ? null : st.period === "latest" ? mName(prev[0])
-    : st.period === "12m" ? `the 12 months before` : st.period === "ytd" ? `the same months of ${ly - 1}` : `${yr(prev[0])}${cur.length < 12 ? " (same months)" : ""}`;
+    : st.period === "12m" ? `the 12 months before` : st.period === "ytd" ? (lm ? `the same months of ${ly - 1}` : `January ${ly - 1}`) : `${yr(prev[0])}${cur.length < 12 ? " (same months)" : ""}`;
   return { cur: new Set(cur), prev: prev && new Set(prev), label, prevLabel, focusYear: yr(cur.at(-1)), n: cur.length };
 }
 function tally(dir, st, set, country = null) {
@@ -562,7 +564,7 @@ function buildTrade(dir) {
   const local = el("div", { class: "ctrls" }, [
     field("Period", el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, [
       segBtns(`${dir}-period`, [["latest", "Latest month"], ["ytd", "Year to date"], ["12m", "Last 12 months"]], st.period, (v) => { st.period = v; st.year = null; render(dir); }),
-      select(`${dir}-year`, [["", "Pick a year"], ...years.map((y) => [y, y === yr(L) && mo(L) < 11 ? `${y} (Jan–${MON[mo(L)]})` : String(y)])], "", (v) => { if (v) { st.period = "year"; st.year = +v; render(dir); } }, "Calendar year"),
+      select(`${dir}-year`, [["", "Pick a year"], ...years.map((y) => [y, y === yr(L) && mo(L) < 11 ? `${y} (${janToShort(mo(L))})` : String(y)])], "", (v) => { st.period = v ? "year" : "12m"; st.year = v ? +v : null; render(dir); }, "Calendar year"),
     ])),
     field("Region", segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => zoomTo(dir, v))),
   ]);
@@ -597,7 +599,7 @@ function drawOverTime(dir) {
   const years = [...new Set(D.months.map((s) => +s.slice(0, 4)))];
   const L = N - 1, part = mo(L) < 11 ? years.length - 1 : null, ly = yr(L);
   const rows = R[dir].filter((r) => pass(dir, st, r));
-  const biggest = (keyFn, n) => { const t = new Map(); for (const r of rows) t.set(keyFn(r), (t.get(keyFn(r)) || 0) + r.lb); return [...t].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k); };
+  const biggest = (keyFn, n) => { const t = new Map(); for (const r of rows) t.set(keyFn(r), (t.get(keyFn(r)) || 0) + (m === "usd" ? r.usd : r.lb)); return [...t].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k); };
   let groups, how = "";
   if (st.by === "country") {
     const top = biggest((r) => r.c, 4);
@@ -614,7 +616,7 @@ function drawOverTime(dir) {
   groups.push({ name: st.by === "region" ? "All other regions" : "All others", color: "var(--c5)", keep: () => true });
   const sums = groups.map(() => years.map(() => ({ lb: 0, usd: 0 })));
   for (const r of rows) { const g = groups.findIndex((x) => x.keep(r)); const o = sums[g][years.indexOf(yr(r.m))]; o.lb += r.lb; o.usd += r.usd; }
-  const used = groups.map((g, i) => ({ ...g, sum: sums[i] })).filter((g, i) => i < named || g.sum.some((o) => o.lb || o.usd));
+  const used = groups.map((g, i) => ({ ...g, sum: sums[i] })).filter((g, i) => (i < named && st.by !== "species") || g.sum.some((o) => o.lb || o.usd));
   const host = $(`#${dir}-ot`), label = `U.S. catfish ${w.noun} by year`;
   const ylabels = years.map((y, k) => `'${String(y).slice(2)}${k === part ? "*" : ""}`);
   if (m === "price") {
@@ -631,10 +633,10 @@ function drawOverTime(dir) {
       stacks: used.map((g) => ({ name: g.name, color: g.color, values: g.sum.map(pick) })) });
   }
   const unit = m === "lb" ? "Pounds (product weight)" : m === "usd" ? (S.money === "real" ? `Dollars, in ${mName(IDX.get(D.cpi.base))} dollars` : "Dollars, as reported") : "Average price per pound (years under 1,000 lb left out)";
-  $(`#${dir}-ot-note`).textContent = `${unit}.${how}${part != null ? ` * ${ly} is January–${MONTH[mo(L)]} only.` : ""}`;
+  $(`#${dir}-ot-note`).textContent = `${unit}.${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
   if (dir === "imp") {
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
-    $("#imp-price-note").textContent = `Dollars per pound: customs value divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is January–${MONTH[mo(L)]} only.` : ""}`;
+    $("#imp-price-note").textContent = `Dollars per pound: customs value divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
     lineChart($("#imp-price"), { labels: ylabels, label: "Average import price by species, dollars per pound", fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: "All imports", cls: "s-avg", values: pr(() => true) },
       ...D.species.slice(0, 2).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),
@@ -665,7 +667,11 @@ function render(dir) {
   const filt = [st.form !== "all" ? (dir === "imp" ? D.forms[st.form].toLowerCase() : st.form === "fresh" ? "fresh (NOAA grouping)" : "frozen (NOAA grouping)") : null,
     dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
   $(`#${dir}-h`).textContent = `${w.noun[0].toUpperCase() + w.noun.slice(1)} by country`;
-  $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ${lbTxt(cur.tot.lb)}, ${usdTxt(cur.tot.usd)}, ${priceTxt(cur.tot)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}.${moneyNote()}`;
+  const zsum = rank.reduce((a, [, o]) => ({ lb: a.lb + o.lb, usd: a.usd + o.usd }), { lb: 0, usd: 0 }), T = zoned ? zsum : cur.tot;
+  const usTot = zoned ? ` (U.S. total ${lbTxt(cur.tot.lb)})` : "";
+  $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ` + (zoned && !rank.length
+    ? `no ${w.noun} ${w.toFrom} ${zone}${usTot}.`
+    : `${zoned ? `${zone}, ` : ""}${lbTxt(T.lb)}, ${usdTxt(T.usd)}, ${priceTxt(T)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}${usTot}.`) + moneyNote();
   $(`#${dir}-legend`).textContent = !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
     : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details, or a total row in the list for the whole ${zoned ? "region" : "selection"}.`;
   // ranked list
@@ -709,7 +715,7 @@ function drawYears(dir, P, host) {
   const ms = monthly(dir, st, null, c != null ? (r) => r.c === c : (r) => inZone(r.c, zone));
   const an = annual(ms), part = mo(N - 1) < 11 ? an.length - 1 : null;
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
-  const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
+  const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => (v > 0 ? `$${v.toFixed(2)}/lb` : "– (under 1,000 lb)");
   barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
     breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "whole fish from 2012",
     partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => (m === "price" && a.lb < 1000 ? 0 : val(a, m) ?? 0)) }] });
@@ -779,9 +785,9 @@ function drawDetail(dir, P, cur, prev, rank) {
   if (yearsBox) drawYears(dir, P, yearsBox);
   lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}`, fmt, tipFmt, series: [
     { name: String(fy), cls: "s-now", values: yearLine(ms, fy, m), dots: true },
-    { name: String(fy - 1), cls: "s-last", values: yearLine(ms, fy - 1, m) },
-    { name: `3-year average (${fy - 3}–${String(fy - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, fy, m) },
-  ] });
+    fy - 1 >= yr(0) ? { name: String(fy - 1), cls: "s-last", values: yearLine(ms, fy - 1, m) } : null,
+    fy - 3 >= yr(0) ? { name: `3-year average (${fy - 3}–${String(fy - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, fy, m) } : null,
+  ].filter(Boolean) });
   const parts = [];
   if (dir === "imp") {
     const sp = [0, 0, 0], fm = [0, 0, 0, 0, 0];
@@ -801,10 +807,10 @@ function drawDetail(dir, P, cur, prev, rank) {
       el("div", {}, [el("b", { text: usdTxt(o.usd) }), el("span", { text: "value" })]),
       el("div", {}, [el("b", {}, [priceTxt(o), o.lb > 0 && o.lb < SMALL ? el("span", { class: "few", text: "few lb" }) : null]), el("span", { text: "average price" })]),
       whole && !zoned ? el("div", {}, [el("b", { text: String(rank.length) }), el("span", { text: rank.length === 1 ? WORD[dir].from : WORD[dir].plural })])
-        : el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}` })]),
+        : el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}${st.form !== "all" || (dir === "imp" && st.species !== "all") ? " in this selection" : ""}` })]),
       el("div", {}, [el("b", { class: ch.c, text: ch.t }), el("span", { text: P.prev ? `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` : "no earlier year" })]),
     ]),
-    yearsBox ? el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${mo(N - 1) < 11 ? ` (* ${yr(N - 1)} is January–${MONTH[mo(N - 1)]})` : ""}` }), yearsBox]) : null,
+    yearsBox ? el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${mo(N - 1) < 11 ? ` (* ${yr(N - 1)} is ${janTo(mo(N - 1))})` : ""}` }), yearsBox]) : null,
     ...parts,
     el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), mchart]),
   ].filter(Boolean));
@@ -819,7 +825,7 @@ function renderMonth() {
   const iy = one("imp", ytd), iyP = one("imp", ytdP);
   const ex = one("exp", new Set([L])), exP = one("exp", new Set([L - 12])), ey = one("exp", ytd), eyP = one("exp", ytdP);
   $("#month-h").textContent = mName(L);
-  $("#month-sub").textContent = `The newest month the U.S. Census Bureau has released. Changes compare with ${mName(L - 12)}; year to date is January–${MONTH[lm]}.`;
+  $("#month-sub").textContent = `The newest month the U.S. Census Bureau has released. Changes compare with ${mName(L - 12)}; year to date is ${janTo(lm)}.`;
   const chg = (a, b) => { const c = change(a, b); return el("span", { class: c.c, text: c.t }); };
   const topList = (t, n) => [...t.by].sort((a, b) => b[1].lb - a[1].lb).slice(0, n);
   const sp = [0, 0, 0]; for (const r of R.imp) if (r.m === L) sp[r.s] += r.lb;
@@ -862,12 +868,12 @@ function renderMonth() {
 
 // ---- tabs ----
 const TABS = ["month", "imp", "exp", "about"];
-function show(tab) {
-  if (tab === "trend") tab = "imp";      // the long-term trends tab merged into Imports and Exports (2026-11-03)
-  if (!TABS.includes(tab)) tab = "month";
+const tabOf = (h) => (h === "trend" ? "imp" : TABS.includes(h) ? h : null);   // trends merged into Imports and Exports (2026-11-03)
+function show(tab, keepHash = false) {
+  tab = tabOf(tab) || "month";
   for (const t of TABS) { $(`#${t}`).hidden = t !== tab; $(`#t-${t}`).setAttribute("aria-selected", String(t === tab)); $(`#t-${t}`).tabIndex = t === tab ? 0 : -1; }
   if (tab === "imp" || tab === "exp") render(tab);
-  if (location.hash.slice(1) !== tab) history.replaceState(null, "", `#${tab}`);
+  if (!keepHash && location.hash.slice(1) !== tab) history.replaceState(null, "", `#${tab}`);
   hideTip();
 }
 for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => { show(b.dataset.tab); window.scrollTo({ top: 0 }); });
@@ -877,7 +883,7 @@ $("[role=tablist]").addEventListener("keydown", (e) => {
   if (j != null) { e.preventDefault(); show(TABS[j]); $(`#t-${TABS[j]}`).focus(); }
 });
 addEventListener("scroll", hideTip, { passive: true });
-addEventListener("hashchange", () => { if (D) show(location.hash.slice(1)); });
+addEventListener("hashchange", () => { const t = tabOf(location.hash.slice(1)); if (D && t) show(t); });
 
 // ---- start ----
 Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u); return r.json(); })))
@@ -900,7 +906,9 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`;
     $("#cpi-base").textContent = `${mName(IDX.get(D.cpi.base))}`;
     renderMonth();
-    show(location.hash.slice(1) || "month");
+    const h = location.hash.slice(1), anchor = h && !tabOf(h) ? document.getElementById(h) : null;
+    show(h, !!anchor);
+    if (anchor) anchor.scrollIntoView();
   })
   .catch((e) => { $("#asof").textContent = "The trade data didn't load. Please refresh the page."; console.error(e); });
 })();

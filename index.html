@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>U.S. Catfish Trade</title>
+<meta name="description" content="Monthly U.S. catfish imports and exports by country, species and product since 2005, from U.S. Census Bureau and NOAA Fisheries trade data.">
+<style>
+@font-face { font-family: "Bitter"; font-weight: 600; font-style: normal; font-display: swap; src: url(fonts/bitter-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Bitter"; font-weight: 700; font-style: normal; font-display: swap; src: url(fonts/bitter-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 400; font-style: normal; font-display: swap; src: url(fonts/public-sans-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 500; font-style: normal; font-display: swap; src: url(fonts/public-sans-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 600; font-style: normal; font-display: swap; src: url(fonts/public-sans-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Public Sans"; font-weight: 700; font-style: normal; font-display: swap; src: url(fonts/public-sans-latin-700-normal.woff2) format("woff2"); }
+/* The look of the cattle auction and drought dashboards: MSU maroon masthead,
+   Bitter headings, Public Sans text, pill tabs, light and dark. */
+:root {
+  --bg: #f7f5f5; --surface: #ffffff; --ink: #1c1c1c; --ink-2: #4a4446; --muted: #6f686a; --rule: #e4dfe0;
+  --accent: #5d1725; --accent-ink: #ffffff; --accent-soft: #f3e9eb; --link: #8a2236; --focus: #c99700;
+  --line-1: #9b3047; --line-2: #1c1c1c; --line-3: #777777;
+  --up: #2e6b3f; --down: #b3261e; --warn-bg: #fff3d6; --warn-ink: #7a4600;
+  --none: #e9e6e7; --area: #cfc9cb; --land-line: #ffffff;
+  --c1: #9b3047; --c2: #c99700; --c3: #4f6d8a; --c4: #2f7d6b; --c5: #a9a1a4; --c6: #d48aa0; --c7: #7c5a2e; --c8: #6b4e8f; --c9: #3d8eb0;
+  --display: "Bitter", Georgia, "Times New Roman", serif;
+  --body: "Public Sans", Arial, Helvetica, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151112; --surface: #1f191b; --ink: #f1ecee; --ink-2: #cfc6c9; --muted: #a59a9e; --rule: #3a3134;
+    --accent: #6e1d2e; --accent-ink: #ffffff; --accent-soft: #33212a; --link: #f0a3b3; --focus: #e2b93b;
+    --line-1: #e07a90; --line-2: #f1ecee; --line-3: #9a9194; --up: #86c995; --down: #f2958c;
+    --warn-bg: #3b2c0e; --warn-ink: #f6c56a; --none: #2c2527; --area: #4e474a; --land-line: #1f191b;
+    --c1: #e07a90; --c5: #7d7477; --c3: #7fa3c4; --c4: #5fb39e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+    --bg: #151112; --surface: #1f191b; --ink: #f1ecee; --ink-2: #cfc6c9; --muted: #a59a9e; --rule: #3a3134;
+    --accent: #6e1d2e; --accent-ink: #ffffff; --accent-soft: #33212a; --link: #f0a3b3; --focus: #e2b93b;
+    --line-1: #e07a90; --line-2: #f1ecee; --line-3: #9a9194; --up: #86c995; --down: #f2958c;
+    --warn-bg: #3b2c0e; --warn-ink: #f6c56a; --none: #2c2527; --area: #4e474a; --land-line: #1f191b;
+    --c1: #e07a90; --c5: #7d7477; --c3: #7fa3c4; --c4: #5fb39e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 70px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+a { color: var(--link); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* masthead */
+.mast { background: var(--accent); color: var(--accent-ink); }
+.mast .wrap { padding-block: 22px 20px; }
+h1 { font: 700 clamp(28px, 5vw, 40px)/1.08 var(--display); margin: 0; text-wrap: balance; }
+.asof { margin: 6px 0 0; font-size: 14px; opacity: .9; }
+.asof.edu { margin-top: 2px; font-size: 13px; }
+.asof a { color: inherit; }
+.stale-row { padding-block: 14px 0; }
+.warn { margin: 0; border-left: 4px solid var(--warn-ink); background: var(--warn-bg); color: var(--ink); padding: 10px 14px; border-radius: 6px; font-size: 14.5px; }
+
+/* tabs */
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--rule); }
+.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-block: 8px; }
+.tab { flex: 0 0 auto; border: 0; background: transparent; padding: 9px 14px; border-radius: 999px; font-weight: 600; font-size: 15px; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.tab:hover { background: var(--accent-soft); color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.tab .s { display: none; }
+@media (max-width: 560px) {   /* short labels, three across, so no tab hides off screen */
+  .tabs .wrap { display: grid; grid-template-columns: repeat(3, 1fr); padding-block: 6px; gap: 2px 4px; }
+  .tab { padding: 6px 6px; font-size: 14px; } .tab .l { display: none; } .tab .s { display: inline; }
+}
+
+/* panels */
+main { padding-block: 26px 40px; }
+.panel { display: grid; gap: 22px; }
+.panel[hidden] { display: none; }
+.panel > * { min-width: 0; }
+h2 { font: 700 clamp(22px, 3.4vw, 28px)/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 700 18px/1.3 var(--body); margin: 0; }
+.sub { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; max-width: 74ch; }
+.note { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 78ch; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r); padding: 18px; min-width: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.k { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.big { font: 700 32px/1.1 var(--body); margin: 6px 0 4px; font-variant-numeric: tabular-nums; color: var(--accent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .big { color: var(--line-1); } }
+:root[data-theme="dark"] .big { color: var(--line-1); }
+.lines { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 14.5px; color: var(--ink-2); }
+.lines b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.up { color: var(--up); font-weight: 600; } .down { color: var(--down); font-weight: 600; } .flat { color: var(--muted); font-weight: 600; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+/* controls */
+.ctrls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > span { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.field select { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); max-width: 100%; }
+.seg { display: inline-flex; flex-wrap: nowrap; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; max-width: 100%; }
+.seg button { border: 0; background: var(--surface); padding: 6px 12px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+@media (max-width: 640px) { .seg button { padding: 6px 9px; font-size: 13px; } }
+@media (max-width: 420px) { .seg button { padding: 6px 7px; font-size: 12.5px; } }
+.btn { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
+.btn.alt { background: var(--surface); color: var(--ink); border: 1px solid var(--rule); }
+.btn:hover { filter: brightness(1.1); }
+
+/* map */
+.mapcard { padding: 12px; position: relative; }
+.mapsvg { display: block; width: 100%; height: auto; max-height: 62vh; }
+.mapsvg .land { fill: var(--none); stroke: var(--land-line); stroke-width: .5; vector-effect: non-scaling-stroke; }
+.mapsvg .land.has { fill: var(--area); cursor: pointer; }
+.mapsvg .land.sel { fill: var(--accent-soft); stroke: var(--ink); stroke-width: 1.5; }
+.mapsvg .bub { fill: var(--line-1); fill-opacity: .5; stroke: var(--accent); stroke-width: 1; vector-effect: non-scaling-stroke; cursor: pointer; }
+.mapsvg .bub:hover, .mapsvg .bub:focus-visible { fill-opacity: .8; }
+.mapsvg .bub.sel { fill-opacity: .85; stroke: var(--ink); stroke-width: 2.2; }
+.mapbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 14px; align-items: center; margin: 2px 4px 8px; }
+.legend { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; padding: 9px 11px; font-size: 13.5px; box-shadow: 0 6px 24px rgba(0,0,0,.18); max-width: 270px; }
+.tip b { display: block; font-size: 14px; margin-bottom: 2px; }
+.tip .row { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
+
+/* list + detail */
+.split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.tablewrap { overflow-x: auto; max-height: 640px; overflow-y: auto; }
+table.rank { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+table.rank th { position: sticky; top: 0; background: var(--surface); text-align: left; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 8px 8px; border-bottom: 2px solid var(--rule); white-space: nowrap; }
+table.rank td { padding: 8px; border-bottom: 1px solid var(--rule); }
+table.rank .n { text-align: right; white-space: nowrap; }
+table.rank tbody tr { cursor: pointer; }
+table.rank tbody tr:hover { background: var(--accent-soft); }
+table.rank tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+table.rank tfoot td { font-weight: 700; border-bottom: 0; border-top: 2px solid var(--rule); }
+.rb { display: inline-block; width: 60px; height: 9px; background: var(--none); border-radius: 3px; vertical-align: middle; margin-left: 6px; overflow: hidden; }
+.rb i { display: block; height: 100%; background: var(--accent); }
+/* The list shares its row with the country detail: show only the chosen
+   measure's column until there's room for pounds, dollars and price together. */
+@media (max-width: 1120px) { table.rank .opt:not(.on) { display: none; } }
+@media (max-width: 640px) { .rb { display: none; } }
+@media (max-width: 420px) {   /* after the base table rules, so these win */
+  table.rank { font-size: 13.5px; }
+  table.rank td, table.rank th { padding: 7px 4px; }
+  table.rank th, table.rank th.n { font-size: 11px; letter-spacing: .02em; white-space: normal; vertical-align: bottom; }
+}
+.few { background: var(--warn-bg); color: var(--warn-ink); font-weight: 600; padding: 0 5px; border-radius: 4px; font-size: 12px; margin-left: 4px; }
+.detail { display: grid; gap: 14px; }
+.detail h3 { font: 700 22px/1.2 var(--display); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.stats div { min-width: 0; }
+.stats b { display: block; font: 700 19px/1.2 var(--body); font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12.5px; color: var(--muted); }
+.mix { display: flex; height: 16px; border-radius: 5px; overflow: hidden; background: var(--none); }
+.mix span { display: block; height: 100%; }
+.keys { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; color: var(--ink-2); }
+.keys li { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: 0 0 auto; }
+.sw.dash { height: 0; border-top: 2px dashed var(--line-2); border-radius: 0; width: 16px; }
+.sw.ln { height: 3px; border-radius: 2px; width: 16px; }
+
+/* charts */
+.chart { width: 100%; height: auto; display: block; touch-action: pan-y; overflow: visible; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; }
+.chart .ax { fill: var(--muted); font: 12px var(--body); }
+.chart .s-now { fill: none; stroke: var(--line-1); stroke-width: 2.6; stroke-linejoin: round; }
+.chart .s-last { fill: none; stroke: var(--line-3); stroke-width: 2; stroke-linejoin: round; }
+.chart .s-avg { fill: none; stroke: var(--line-2); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.chart .cross { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .hl { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.readout { font-size: 13.5px; min-height: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); margin: 4px 0 0; }
+.para { font-size: 16px; line-height: 1.6; margin: 0; max-width: 80ch; }
+.about h3 { margin-top: 6px; }
+.about p, .about li { max-width: 78ch; }
+table.codes { border-collapse: collapse; font-size: 14px; }
+table.codes th, table.codes td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.codes th { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+details.method summary { cursor: pointer; font-weight: 600; }
+
+/* footer */
+footer { border-top: 1px solid var(--rule); background: var(--surface); }
+footer .wrap { padding-block: 26px 36px; display: grid; gap: 14px; }
+footer h2 { font-size: 20px; }
+footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap">
+    <h1>U.S. Catfish Trade</h1>
+    <p class="asof" id="asof">Loading the latest trade data…</p>
+    <p class="asof edu">For educational use only. <a href="#disclaimer">Read the disclaimer</a>.</p>
+  </div>
+</header>
+<div class="wrap stale-row" id="stale-row" hidden><p class="warn" role="status" id="stale"></p></div>
+
+<nav class="tabs" aria-label="Dashboard sections">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="t-month" aria-controls="month" data-tab="month"><span class="l">This month</span><span class="s">This month</span></button>
+    <button class="tab" role="tab" id="t-imp" aria-controls="imp" data-tab="imp"><span class="l">Imports by country</span><span class="s">Imports</span></button>
+    <button class="tab" role="tab" id="t-exp" aria-controls="exp" data-tab="exp"><span class="l">Exports by country</span><span class="s">Exports</span></button>
+    <button class="tab" role="tab" id="t-trend" aria-controls="trend" data-tab="trend"><span class="l">Long-term trends</span><span class="s">Trends</span></button>
+    <button class="tab" role="tab" id="t-about" aria-controls="about" data-tab="about"><span class="l">About the data</span><span class="s">About</span></button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <!-- This month -->
+  <section class="panel" id="month" role="tabpanel" aria-labelledby="t-month">
+    <div><h2 id="month-h">This month</h2><p class="sub" id="month-sub"></p></div>
+    <div class="cards" id="month-cards"></div>
+    <p class="note">Pounds are product weight, as shipped: a pound of fillets is a pound of fillets, not the live weight
+      of the fish they came from, so these figures can't be compared directly with pond production.</p>
+    <div class="two">
+      <div class="card"><h3>U.S. catfish imports by month</h3><p class="note">Million pounds.</p><div id="month-imp-chart"></div></div>
+      <div class="card"><h3>U.S. catfish exports by month</h3><p class="note">Thousand pounds.</p><div id="month-exp-chart"></div></div>
+    </div>
+    <div class="card" id="para-card">
+      <h3>This month's trade paragraph</h3>
+      <p class="note">The paragraph in MSU Extension's monthly catfish report, word for word.</p>
+      <p class="para" id="para"></p>
+      <p style="margin:12px 0 0"><button class="btn alt" id="copy-para" type="button">Copy paragraph</button> <span class="note" id="copied" role="status"></span></p>
+    </div>
+  </section>
+
+  <!-- Imports / Exports share one layout, built by the script -->
+  <section class="panel" id="imp" role="tabpanel" aria-labelledby="t-imp" hidden></section>
+  <section class="panel" id="exp" role="tabpanel" aria-labelledby="t-exp" hidden></section>
+
+  <!-- Long-term trends -->
+  <section class="panel" id="trend" role="tabpanel" aria-labelledby="t-trend" hidden>
+    <div><h2>Long-term trends</h2><p class="sub" id="trend-sub">Every year since 2005, the first full year U.S. catfish imports are reported by species.</p></div>
+    <div class="ctrls"><div class="field"><span>Show</span><div class="seg" id="trend-measure"></div></div><div class="field"><span>Dollars</span><div class="seg" id="trend-money"></div></div></div>
+    <div class="two">
+      <div class="card"><h3>Imports by supplying country</h3><div id="tr-imp-cty"></div></div>
+      <div class="card"><h3>Imports by species</h3><div id="tr-imp-sp"></div></div>
+      <div class="card"><h3>Average import price</h3><p class="note" id="tr-price-note">Dollars per pound: customs value divided by pounds, by species.</p><div id="tr-price"></div></div>
+      <div class="card"><h3>Exports by destination region</h3><div id="tr-exp-reg"></div></div>
+    </div>
+    <p class="note" id="trend-note"></p>
+  </section>
+
+  <!-- About -->
+  <section class="panel about" id="about" role="tabpanel" aria-labelledby="t-about" hidden>
+    <div><h2>About the data</h2><p class="sub">What's counted, how it's measured, and where it comes from.</p></div>
+    <div class="card">
+      <h3>What's counted</h3>
+      <p>All U.S. trade in catfish (the order Siluriformes). From 2012 on, the Harmonized System codes that hold only catfish:</p>
+      <div class="tablewrap" style="max-height:none"><table class="codes"><thead><tr><th>Code</th><th>Product</th><th>Counted in</th></tr></thead><tbody>
+        <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports; exports (as fresh, see below)</td></tr>
+        <tr><td>0304.32</td><td>Fresh or chilled fillets</td><td>Imports and exports</td></tr>
+        <tr><td>0303.24</td><td>Whole or dressed, frozen</td><td>Imports and exports</td></tr>
+        <tr><td>0302.72</td><td>Whole or dressed, fresh or chilled</td><td>Imports and exports</td></tr>
+        <tr><td>0304.51.0010, .0015</td><td>Other meat, fresh or chilled (<i>Ictalurus</i> and Pangasius only)</td><td>Imports</td></tr>
+      </tbody></table></div>
+      <p>Mixed codes that also hold other fish (such as tilapia, carp or eels) are left out, because they can't be split.</p>
+      <h3>2005 to 2011</h3>
+      <p>These years come from NOAA Fisheries' Foreign Trade database, which carries the Census Bureau's own trade figures
+        under the catfish codes in use before 2012 (they match Census to the pound where both exist). Imports cover the same
+        species and products as later years, except a few other-catfish whole fish. <b>Exports before 2012 count fillets
+        only</b>; whole and dressed catfish exports are counted from 2012, so export totals step up that year.</p>
+      <h3>Why it starts in 2005</h3>
+      <p>Catfish imports were first reported by species in July 2004. Before that, much of the basa and tra imported from
+        Vietnam was recorded as "marine fish" or "freshwater fish" fillets, mixed with other fish, so earlier catfish import
+        figures would undercount it. 2005 is the first full year with complete catfish detail.</p>
+      <h3>Species</h3>
+      <p>Import records name the species: channel catfish (<i>Ictalurus</i>), Pangasius (basa and tra), or other catfish
+        (<i>Clarias</i>, <i>Silurus</i> and others). Export records don't name a species.</p>
+      <h3>Fresh and frozen exports</h3>
+      <p>Exports are split into fresh and frozen the way NOAA Fisheries names them, which is how the monthly report has
+        always been published: frozen fillets (0304.62) count as <b>fresh</b> along with fresh fillets and fresh whole fish,
+        and only frozen whole or dressed fish (0303.24) counts as frozen. Census's own descriptions would put frozen fillets
+        under frozen.</p>
+      <h3>How it's measured</h3>
+      <ul>
+        <li><b>Imports</b> are imports for consumption (pounds) and the customs value of general imports (dollars), the basis NOAA
+          Fisheries uses. A few shipments show a value but no pounds; they count in dollars only.</li>
+        <li><b>Exports</b> are domestic exports only: U.S.-produced catfish. Re-exports of imported catfish are left out.</li>
+        <li><b>Pounds</b> are product weight, as shipped, converted from Census's kilograms (1 kg = 2.20462 lb). A pound of
+          fillets is a pound of fillets, not the live weight of the fish it came from, so these figures can't be compared
+          directly with pond production or processors' live-weight purchases.</li>
+        <li><b>Dollars</b> are the declared customs value. <b>Price per pound</b> is dollars divided by pounds: an average unit
+          value, not a market price. Prices resting on under 10,000 lb are marked <span class="few">few lb</span>.</li>
+        <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the country or trend tabs.
+          Adjusted dollars are converted to <span id="cpi-base">the newest month's</span> dollars with the Consumer Price Index
+          for All Urban Consumers (CPI-U, U.S. city average, U.S. Bureau of Labor Statistics). BLS published no CPI for October
+          2025 because of the government shutdown; that month uses the midpoint of September and November 2025.</li>
+        <li>Duties are not shown. Census's duty figure leaves out antidumping and countervailing duties, so it understates
+          what importers pay.</li>
+      </ul>
+      <h3>When it updates</h3>
+      <p>The U.S. Census Bureau releases each month's trade about five weeks after the month ends, on a date between the 2nd
+        and the 12th. This page updates on the 12th. Each update also re-pulls the current and previous year, so recent
+        months pick up Census's revisions.</p>
+      <h3>Not included</h3>
+      <p>U.S. catfish production, processing, prices or inventories; other fish and seafood; state or port detail (U.S.
+        totals by partner country only); and anything before 2005.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <section id="disclaimer" aria-labelledby="disc-h">
+      <h2 id="disc-h">Disclaimer</h2>
+      <p>For educational use only. This page summarizes U.S. Census Bureau trade statistics. It is not a forecast or
+        financial, legal or marketing advice, and you use it at your own risk.</p>
+      <details class="method"><summary>Full disclaimer</summary>
+        <p style="margin-top:8px">Trade statistics are revised after release and can contain errors. Prices per pound are
+          averages of declared customs values, not market prices. The information is provided as is, without warranty of any
+          kind; its authors are not liable for decisions made with it. This page is not affiliated with or endorsed by the
+          U.S. Census Bureau or NOAA Fisheries.</p>
+      </details>
+    </section>
+    <p>Sources: U.S. Census Bureau, International Trade data (2012 on), and NOAA Fisheries, Foreign Trade data
+      (2005–2011). Inflation adjustment: U.S. Bureau of Labor Statistics, CPI-U. Compiled by Mississippi State
+      University Extension.</p>
+    <p class="note" id="foot-gen"></p>
+  </div>
+</footer>
+<div class="tip" id="tip" role="status" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (q, r = document) => r.querySelector(q);
+const SVGNS = "http://www.w3.org/2000/svg";
+function mk(ns, tag, props, kids) {
+  const n = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === "text") n.textContent = v;
+    else if (k === "class") n.setAttribute("class", v);
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of [].concat(kids ?? [])) if (c != null && c !== false) n.append(c);
+  return n;
+}
+const el = (t, p, k) => mk(null, t, p, k);
+const sv = (t, p, k) => mk(SVGNS, t, p, k);
+
+let D, G, R, N, IDX;            // data, map, rows, number of months, "YYYY-MM" -> index
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const yr = (i) => +D.months[i].slice(0, 4);
+const mo = (i) => +D.months[i].slice(5, 7) - 1;
+const mName = (i) => `${MONTH[mo(i)]} ${yr(i)}`;
+const mShort = (i) => `${MON[mo(i)]} ${yr(i)}`;
+const SMALL = 10000;
+const breakIdx = (cats) => { const i = cats.indexOf(+(D.meta.censusFrom || "2012").slice(0, 4)); return i > 0 ? i : null; };
+const FILLETS_NOTE = "Before 2012, exports count fillets only; whole and dressed fish are counted from 2012.";           // prices resting on fewer pounds get a "few lb" flag
+const COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c6)", "var(--c7)", "var(--c8)", "var(--c9)", "var(--c5)"];
+
+// ---- numbers ----
+const nf = new Intl.NumberFormat("en-US");
+const lbTxt = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} million lb` : `${nf.format(Math.round(n))} lb`);
+const usdTxt = (n) => (n >= 1e6 ? `$${(n / 1e6).toFixed(1)} million` : `$${nf.format(Math.round(n))}`);
+const priceTxt = (o) => (o.lb > 0 ? `$${(o.usd / o.lb).toFixed(2)}/lb` : "–");
+const compact = (n) => (n >= 1e9 ? `${+(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : `${+n.toFixed(2)}`);
+const val = (o, m) => (!o ? null : m === "lb" ? o.lb : m === "usd" ? o.usd : o.lb > 0 ? o.usd / o.lb : null);
+const tblLb = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : nf.format(Math.round(n)));
+const tblUsd = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : `${nf.format(Math.round(n))}`);
+const valTxt = (o, m) => (m === "lb" ? lbTxt(o.lb) : m === "usd" ? usdTxt(o.usd) : priceTxt(o));
+const axTxt = (m) => (m === "usd" ? (v) => `$${compact(v)}` : m === "price" ? (v) => `$${v.toFixed(2)}` : compact);
+function change(cur, prev) {
+  if (cur == null || prev == null) return { t: "–", c: "flat" };
+  if (!prev) return cur ? { t: "new", c: "up" } : { t: "–", c: "flat" };
+  const p = (cur / prev - 1) * 100;
+  if (Math.abs(p) < 0.5) return { t: "same", c: "flat" };
+  return { t: `${p > 0 ? "+" : "−"}${Math.abs(p) >= 10 ? Math.round(Math.abs(p)) : Math.abs(p).toFixed(1)}%`, c: p > 0 ? "up" : "down" };
+}
+
+// ---- state ----
+let Rn, Rr;                     // rows in dollars as reported, and in base-month dollars
+const S = {
+  money: "nom",
+  imp: { period: "12m", year: null, measure: "lb", form: "all", species: "all", country: null, zoom: "World" },
+  exp: { period: "12m", year: null, measure: "lb", form: "all", country: null, zoom: "Americas" },
+  trend: { measure: "lb" },
+};
+const pass = (dir, st, r) => {
+  if (dir === "imp") {
+    if (st.form !== "all" && r.f !== +st.form) return false;
+    if (st.species !== "all" && r.s !== +st.species) return false;
+  } else {
+    if (st.form === "fresh" && r.f === 2) return false;
+    if (st.form === "frozen" && r.f !== 2) return false;
+  }
+  return true;
+};
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, k) => a + k);
+function period(st) {
+  const L = N - 1, ly = yr(L), lm = mo(L);
+  let cur, label;
+  if (st.period === "latest") { cur = [L]; label = mName(L); }
+  else if (st.period === "ytd") { cur = range(L - lm, L); label = lm ? `January–${MONTH[lm]} ${ly}` : `January ${ly}`; }
+  else if (st.period === "12m") { cur = range(L - 11, L); label = `12 months through ${mName(L)}`; }
+  else {
+    const y = st.year;
+    cur = range(0, L).filter((i) => yr(i) === y);
+    label = y === ly && lm < 11 ? `${y} (January–${MONTH[lm]})` : String(y);
+  }
+  const prevIdx = cur.map((i) => i - 12);
+  const prev = prevIdx[0] >= 0 ? prevIdx : null;
+  const prevLabel = !prev ? null : st.period === "latest" ? mName(prev[0])
+    : st.period === "12m" ? `the 12 months before` : st.period === "ytd" ? `the same months of ${ly - 1}` : `${yr(prev[0])}${cur.length < 12 ? " (same months)" : ""}`;
+  return { cur: new Set(cur), prev: prev && new Set(prev), label, prevLabel, focusYear: yr(cur.at(-1)), n: cur.length };
+}
+function tally(dir, st, set, country = null) {
+  const by = new Map(), tot = { lb: 0, usd: 0 };
+  if (!set) return { by, tot: null };
+  for (const r of R[dir]) {
+    if (!set.has(r.m) || !pass(dir, st, r) || (country != null && r.c !== country)) continue;
+    const o = by.get(r.c) ?? { lb: 0, usd: 0 };
+    o.lb += r.lb; o.usd += r.usd; by.set(r.c, o);
+    tot.lb += r.lb; tot.usd += r.usd;
+  }
+  return { by, tot };
+}
+function monthly(dir, st, country = null, extra = null) {
+  const lb = new Array(N).fill(0), usd = new Array(N).fill(0);
+  for (const r of R[dir]) {
+    if (!pass(dir, st, r) || (country != null && r.c !== country) || (extra && !extra(r))) continue;
+    lb[r.m] += r.lb; usd[r.m] += r.usd;
+  }
+  return { lb, usd };
+}
+const at = (ms, i) => (i == null ? null : { lb: ms.lb[i], usd: ms.usd[i] });
+const yearLine = (ms, y, m) => MON.map((_, k) => { const i = IDX.get(`${y}-${String(k + 1).padStart(2, "0")}`); return i == null ? null : val(at(ms, i), m); });
+function avg3Line(ms, y, m) {
+  return MON.map((_, k) => {
+    const o = { lb: 0, usd: 0 };
+    for (let d = 1; d <= 3; d++) {
+      const i = IDX.get(`${y - d}-${String(k + 1).padStart(2, "0")}`);
+      if (i == null) return null;
+      o.lb += ms.lb[i]; o.usd += ms.usd[i];
+    }
+    return m === "price" ? val(o, m) : val(o, m) / 3;
+  });
+}
+function annual(ms) {
+  const ys = [...new Set(D.months.map((s) => +s.slice(0, 4)))];
+  return ys.map((y) => { const o = { lb: 0, usd: 0 }; D.months.forEach((s, i) => { if (+s.slice(0, 4) === y) { o.lb += ms.lb[i]; o.usd += ms.usd[i]; } }); return { y, ...o }; });
+}
+
+// ---- charts ----
+const niceMax = (v) => { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math.log10(v)); for (const f of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (f * p >= v) return f * p; return 10 * p; };
+function lineChart(host, { labels, series, fmt, tipFmt, label }) {
+  const W = 640, H = 250, L = 52, Rt = 14, T = 12, B = 28;
+  const all = series.flatMap((s) => s.values).filter((v) => v != null);
+  const max = niceMax(Math.max(0, ...all));
+  const x = (i) => L + (i * (W - L - Rt)) / Math.max(1, labels.length - 1);
+  const y = (v) => T + (1 - v / max) * (H - T - B);
+  const svg = sv("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": label });
+  for (let k = 0; k <= 4; k++) {
+    const v = (max * k) / 4;
+    svg.append(sv("line", { class: "grid", x1: L, x2: W - Rt, y1: y(v), y2: y(v) }), sv("text", { class: "ax", x: L - 8, y: y(v) + 4, "text-anchor": "end", text: fmt(v) }));
+  }
+  const step = Math.ceil(labels.length / 12);
+  labels.forEach((t, i) => { if (i % step === 0 || i === labels.length - 1) svg.append(sv("text", { class: "ax", x: x(i), y: H - 8, "text-anchor": "middle", text: t })); });
+  for (const s of series) {
+    let d = "", pen = false;
+    s.values.forEach((v, i) => { if (v == null) { pen = false; return; } d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; pen = true; });
+    if (d) svg.append(sv("path", { class: s.cls, d, style: s.color ? `stroke:${s.color}` : null }));
+    if (s.dots) s.values.forEach((v, i) => { if (v != null && (i === 0 || s.values[i - 1] == null) && (i === s.values.length - 1 || s.values[i + 1] == null)) svg.append(sv("circle", { cx: x(i), cy: y(v), r: 3, style: `fill:${s.color || "var(--line-1)"}` })); });
+  }
+  const cross = sv("line", { class: "cross", y1: T, y2: H - B, visibility: "hidden" });
+  svg.append(cross);
+  const out = el("p", { class: "readout", "aria-live": "polite" });
+  const keys = el("ul", { class: "keys" }, series.map((s) => el("li", {}, [el("span", { class: `sw ${s.cls === "s-avg" ? "dash" : "ln"}`, style: s.cls === "s-avg" ? null : `background:${s.color || (s.cls === "s-now" ? "var(--line-1)" : "var(--line-3)")}` }), s.name])));
+  const show = (i) => {
+    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+    out.textContent = `${labels[i]}: ` + series.map((s) => `${s.name} ${s.values[i] == null ? "–" : (tipFmt || fmt)(s.values[i])}`).join(" · ");
+  };
+  svg.addEventListener("pointermove", (e) => { const r = svg.getBoundingClientRect(); const px = ((e.clientX - r.left) / r.width) * W; show(Math.max(0, Math.min(labels.length - 1, Math.round(((px - L) / (W - L - Rt)) * (labels.length - 1))))); });
+  svg.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); out.textContent = ""; });
+  host.replaceChildren(svg, keys, out);
+}
+function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, breakAt, breakLabel }) {
+  const W = 640, H = 250, L = 52, Rt = 8, T = 12, B = 28;
+  const totals = cats.map((_, i) => stacks.reduce((s, st) => s + (st.values[i] || 0), 0));
+  const max = niceMax(Math.max(0, ...totals));
+  const bw = (W - L - Rt) / cats.length;
+  const y = (v) => T + (1 - v / max) * (H - T - B);
+  const svg = sv("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": label });
+  for (let k = 0; k <= 4; k++) { const v = (max * k) / 4; svg.append(sv("line", { class: "grid", x1: L, x2: W - Rt, y1: y(v), y2: y(v) }), sv("text", { class: "ax", x: L - 8, y: y(v) + 4, "text-anchor": "end", text: fmt(v) })); }
+  cats.forEach((c, i) => {
+    let base = 0;
+    const x0 = L + i * bw + bw * 0.14, w = bw * 0.72;
+    stacks.forEach((st) => {
+      const v = st.values[i] || 0; if (!v) return;
+      svg.append(sv("rect", { x: x0, y: y(base + v), width: w, height: Math.max(0, y(base) - y(base + v)), style: `fill:${st.color}`, opacity: partial === i ? 0.55 : 1 }));
+      base += v;
+    });
+    if (hilite === i && totals[i]) svg.append(sv("rect", { class: "hl", x: x0 - 1.5, y: y(totals[i]) - 1.5, width: w + 3, height: y(0) - y(totals[i]) + 3 }));
+    if (i % (cats.length > 12 ? 2 : 1) === 0 || i === cats.length - 1) svg.append(sv("text", { class: "ax", x: x0 + w / 2, y: H - 8, "text-anchor": "middle", text: `${cats.length > 8 ? "'" + String(c).slice(2) : c}${partial === i ? "*" : ""}` }));
+  });
+  if (breakAt > 0) {
+    const bx = L + breakAt * bw;
+    svg.append(sv("line", { class: "cross", x1: bx, x2: bx, y1: T, y2: H - B }), sv("text", { class: "ax", x: bx + 4, y: T + 10, text: breakLabel || "" }));
+  }
+  const out = el("p", { class: "readout", "aria-live": "polite" });
+  const keys = stacks.length > 1 ? el("ul", { class: "keys" }, stacks.map((s) => el("li", {}, [el("span", { class: "sw", style: `background:${s.color}` }), s.name]))) : null;
+  svg.addEventListener("pointermove", (e) => {
+    const r = svg.getBoundingClientRect(); const px = ((e.clientX - r.left) / r.width) * W;
+    const i = Math.max(0, Math.min(cats.length - 1, Math.floor((px - L) / bw)));
+    const parts = stacks.length > 1 ? stacks.filter((s) => s.values[i]).map((s) => `${s.name} ${(tipFmt || fmt)(s.values[i])}`) : [];
+    out.textContent = `${cats[i]}${partial === i ? " (part year)" : ""}: ${(tipFmt || fmt)(totals[i])}${parts.length ? " — " + parts.join(" · ") : ""}`;
+  });
+  svg.addEventListener("pointerleave", () => { out.textContent = ""; });
+  host.replaceChildren(...[svg, keys, out].filter(Boolean));
+}
+const mixBar = (parts) => {
+  const tot = parts.reduce((s, p) => s + p.v, 0);
+  if (!tot) return el("p", { class: "note", text: "None in this period." });
+  return el("div", {}, [
+    el("div", { class: "mix", role: "img", "aria-label": parts.filter((p) => p.v).map((p) => `${p.name} ${Math.round((100 * p.v) / tot)}%`).join(", ") },
+      parts.filter((p) => p.v).map((p) => el("span", { style: `width:${(100 * p.v) / tot}%;background:${p.color}`, title: `${p.name}: ${((100 * p.v) / tot).toFixed(1)}%` }))),
+    el("ul", { class: "keys" }, parts.filter((p) => p.v).map((p) => el("li", {}, [el("span", { class: "sw", style: `background:${p.color}` }), `${p.name} ${((100 * p.v) / tot).toFixed((100 * p.v) / tot < 1 ? 1 : 0)}%`]))),
+  ]);
+};
+
+// ---- tooltip ----
+const tip = $("#tip");
+function showTip(e, title, rows) {
+  tip.replaceChildren(el("b", { text: title }), ...rows.map(([k, v]) => el("div", { class: "row" }, [el("span", { text: k }), el("span", { text: v })])));
+  tip.hidden = false;
+  const r = e.clientX != null ? { x: e.clientX, y: e.clientY } : (() => { const b = e.target.getBoundingClientRect(); return { x: b.right, y: b.top }; })();
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = `${Math.min(innerWidth - w - 8, r.x + 14)}px`;
+  tip.style.top = `${Math.max(8, Math.min(innerHeight - h - 8, r.y - h - 10))}px`;
+}
+const hideTip = () => { tip.hidden = true; };
+
+// ---- Imports / Exports tab ----
+const WORD = { imp: { noun: "imports", from: "supplier", plural: "suppliers", list: "Supplying countries", toFrom: "from" },
+  exp: { noun: "exports", from: "destination", plural: "destinations", list: "Destinations", toFrom: "to" } };
+const segBtns = (id, opts, cur, onPick) => el("div", { class: "seg", id, role: "group" }, opts.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(v === cur), "data-v": v, text: t, onclick: () => onPick(v) })));
+const field = (label, ctl) => el("div", { class: "field" }, [el("span", { text: label }), ctl]);
+function select(id, opts, cur, onPick, label) {
+  const s = el("select", { id, "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
+  s.value = String(cur); s.addEventListener("change", () => onPick(s.value)); return s;
+}
+const built = { imp: false, exp: false };
+function buildTrade(dir) {
+  const w = WORD[dir], host = $(`#${dir}`), st = S[dir];
+  const L = N - 1, years = [...new Set(D.months.map((s) => +s.slice(0, 4)))].reverse();
+  const ctrls = el("div", { class: "ctrls" }, [
+    field("Period", el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, [
+      segBtns(`${dir}-period`, [["latest", "Latest month"], ["ytd", "Year to date"], ["12m", "Last 12 months"]], st.period, (v) => { st.period = v; st.year = null; render(dir); }),
+      select(`${dir}-year`, [["", "Pick a year"], ...years.map((y) => [y, y === yr(L) && mo(L) < 11 ? `${y} (Jan–${MON[mo(L)]})` : String(y)])], "", (v) => { if (v) { st.period = "year"; st.year = +v; render(dir); } }, "Calendar year"),
+    ])),
+    field("Show", segBtns(`${dir}-measure`, [["lb", "Pounds"], ["usd", "Dollars"], ["price", "$ per lb"]], st.measure, (v) => { st.measure = v; render(dir); })),
+    field("Dollars", moneySeg(`${dir}-money`)),
+    field("Product", select(`${dir}-form`, dir === "imp"
+      ? [["all", "All products"], ...D.forms.map((f, i) => [i, f])]
+      : [["all", "All products"], ["fresh", "Fresh (NOAA grouping)"], ["frozen", "Frozen (NOAA grouping)"]], st.form, (v) => { st.form = v; render(dir); }, "Product")),
+    dir === "imp" ? field("Species", select("imp-species", [["all", "All species"], ...D.species.map((s, i) => [i, s])], st.species, (v) => { st.species = v; render(dir); }, "Species")) : null,
+  ]);
+  host.replaceChildren(
+    el("div", {}, [el("h2", { id: `${dir}-h` }), el("p", { class: "sub", id: `${dir}-sub` })]),
+    ctrls,
+    el("div", { class: "card mapcard" }, [
+      el("div", { class: "mapbar" }, [el("p", { class: "legend", id: `${dir}-legend` }),
+        segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => { st.zoom = v; drawMap(dir); })]),
+      el("div", { id: `${dir}-map` }),
+    ]),
+    el("div", { class: "split" }, [
+      el("div", { class: "card" }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` })]),
+      el("div", { class: "card detail", id: `${dir}-detail`, "aria-live": "polite" }),
+    ]),
+    dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names, as the monthly report always has: frozen fillets count as fresh, and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
+  );
+  built[dir] = true;
+}
+const moneyLabel = () => `In ${mShort(IDX.get(D.cpi.base))} dollars`;
+const moneySeg = (id) => segBtns(id, [["nom", "As reported"], ["real", moneyLabel()]], S.money, setMoney);
+function setMoney(v) {
+  S.money = v; R = v === "real" ? Rr : Rn;
+  const tab = TABS.find((t) => !$(`#${t}`).hidden);
+  if (tab === "imp" || tab === "exp") render(tab); else if (tab === "trend") renderTrend();
+}
+const moneyNote = () => (S.money === "real" ? ` Dollars are in ${mName(IDX.get(D.cpi.base))} terms, adjusted for inflation with the CPI-U.` : "");
+function syncSeg(id, v) { for (const b of document.querySelectorAll(`#${id} button`)) b.setAttribute("aria-pressed", String(b.dataset.v === String(v))); }
+function render(dir) {
+  if (!built[dir]) buildTrade(dir);
+  const w = WORD[dir], st = S[dir], P = period(st);
+  syncSeg(`${dir}-period`, st.period === "year" ? "" : st.period);
+  $(`#${dir}-year`).value = st.period === "year" ? String(st.year) : "";
+  syncSeg(`${dir}-measure`, st.measure); syncSeg(`${dir}-zoom`, st.zoom); syncSeg(`${dir}-money`, S.money);
+  const cur = tally(dir, st, P.cur), prev = tally(dir, st, P.prev);
+  const rank = [...cur.by].filter(([, o]) => o.lb > 0 || o.usd > 0).sort((a, b) => (st.measure === "usd" ? b[1].usd - a[1].usd : b[1].lb - a[1].lb));
+  if (st.country == null || !cur.by.has(st.country)) st.country = rank.length ? rank[0][0] : null;
+  const filt = [st.form !== "all" ? (dir === "imp" ? D.forms[st.form].toLowerCase() : st.form === "fresh" ? "fresh (NOAA grouping)" : "frozen (NOAA grouping)") : null,
+    dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
+  $(`#${dir}-h`).textContent = `U.S. catfish ${w.noun} by country`;
+  $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ${lbTxt(cur.tot.lb)}, ${usdTxt(cur.tot.usd)}, ${priceTxt(cur.tot)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}.${moneyNote()}`;
+  $(`#${dir}-legend`).textContent = `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details.`;
+  // ranked list
+  const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
+  const sbasis = st.measure === "usd" ? "usd" : "lb";
+  const top = rank.length ? (rank[0][1][sbasis] || 1) : 1;
+  const tbody = el("tbody", {}, rank.map(([c, o]) => {
+    const p = prev.by.get(c), ch = change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null));
+    const share = cur.tot[sbasis] ? (100 * o[sbasis]) / cur.tot[sbasis] : 0;
+    const tr = el("tr", { tabindex: "0", "aria-selected": String(c === st.country), onclick: () => pick(dir, c), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, c); } } }, [
+      el("td", { text: D.countries[c].name }),
+      el("td", { class: mcls("lb") }, [tblLb(o.lb)]),
+      el("td", { class: mcls("usd") }, [tblUsd(o.usd)]),
+      el("td", { class: mcls("price") }, [o.lb > 0 ? `$${(o.usd / o.lb).toFixed(2)}` : "–", o.lb > 0 && o.lb < SMALL ? el("span", { class: "few", text: "few lb" }) : null]),
+      el("td", { class: "n" }, [`${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%`, el("span", { class: "rb" }, [el("i", { style: `width:${(100 * o[sbasis]) / top}%` })])]),
+      el("td", { class: `n ${ch.c}`, text: ch.t }),
+    ]);
+    return tr;
+  }));
+  const thead = el("thead", {}, [el("tr", {}, [el("th", { text: "Country" }), el("th", { class: mcls("lb"), text: "Pounds" }), el("th", { class: mcls("usd"), text: "Dollars" }), el("th", { class: mcls("price"), text: "$/lb" }), el("th", { class: "n", text: "Share" }), el("th", { class: "n", text: P.prev ? "vs. yr ago" : "Change" })])]);
+  const tfoot = el("tfoot", {}, [el("tr", {}, [el("td", { text: "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).c}`, text: change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).t })])]);
+  $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
+  $(`#${dir}-list-h`).textContent = `${w.list}, ${P.label}`;
+  const early = dir === "exp" && [...P.cur, ...(P.prev || [])].some((i) => D.months[i] < (D.meta.censusFrom || "2012-01"));
+  $(`#${dir}-list-note`).textContent = (early ? FILLETS_NOTE + " " : "") + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}.${P.prev ? ` Change compares with ${P.prevLabel}.` : ""}` : `No ${w.noun} in this selection.`);
+  drawMap(dir, cur);
+  drawDetail(dir, P, cur, prev);
+}
+const mapState = { imp: null, exp: null };
+function drawMap(dir, curArg) {
+  const st = S[dir], host = $(`#${dir}-map`);
+  let ms = mapState[dir];
+  if (!ms) {
+    const svg = sv("svg", { class: "mapsvg", role: "img", "aria-label": `World map of U.S. catfish ${WORD[dir].noun} by country` });
+    const land = sv("g"), bubs = sv("g");
+    const paths = new Map();
+    for (const s of G.shapes) { const p = sv("path", { class: "land", d: s.d }); paths.set(s.n, p); land.append(p); }
+    svg.append(land, bubs);
+    host.replaceChildren(svg);
+    ms = mapState[dir] = { svg, bubs, paths };
+  }
+  const cur = curArg ?? tally(dir, st, period(st).cur);
+  ms.cur = cur;
+  const vb = G.views[st.zoom], k = vb[2] / G.w;
+  ms.svg.setAttribute("viewBox", vb.join(" "));
+  const byGeo = new Map(D.countries.map((c, i) => [c.geo, i]));
+  for (const [name, p] of ms.paths) {
+    const c = byGeo.get(name), has = c != null && cur.by.has(c);
+    p.setAttribute("class", `land${has ? " has" : ""}${c != null && c === st.country ? " sel" : ""}`);
+    p.onclick = has ? () => pick(dir, c) : null;
+  }
+  const basis = st.measure === "usd" ? "usd" : "lb";
+  const items = [...cur.by].filter(([, o]) => o[basis] > 0).sort((a, b) => b[1][basis] - a[1][basis]);
+  const max = items.length ? items[0][1][basis] : 1;
+  const RMAX = 34 * Math.pow(k, 0.55);
+  ms.bubs.replaceChildren(...items.map(([c, o]) => {
+    const [cx, cy] = D.countries[c].at;
+    const r = Math.max(2.2 * Math.pow(k, 0.55), RMAX * Math.sqrt(o[basis] / max));
+    const name = D.countries[c].name;
+    const share = cur.tot[basis] ? ((100 * o[basis]) / cur.tot[basis]).toFixed(1) : "0";
+    const rows = [["Pounds", lbTxt(o.lb)], ["Dollars", usdTxt(o.usd)], ["Price", priceTxt(o)], ["Share", `${share}%`]];
+    return sv("circle", { class: `bub${c === st.country ? " sel" : ""}`, cx, cy, r: r.toFixed(2), tabindex: "0", role: "button", "aria-label": `${name}: ${lbTxt(o.lb)}, ${usdTxt(o.usd)}, ${share}% of the total`,
+      onclick: () => pick(dir, c), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, c); } },
+      onpointermove: (e) => showTip(e, name, rows), onpointerleave: hideTip, onfocus: (e) => showTip(e, name, rows), onblur: hideTip });
+  }));
+}
+function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
+function drawDetail(dir, P, cur, prev) {
+  const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir];
+  if (c == null) { host.replaceChildren(el("p", { class: "note", text: `No ${w.noun} in this selection.` })); return; }
+  const ct = D.countries[c], o = cur.by.get(c) || { lb: 0, usd: 0 }, p = prev.by.get(c);
+  const basis = st.measure === "usd" ? "usd" : "lb";
+  const ch = change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null));
+  const share = cur.tot[basis] ? (100 * o[basis]) / cur.tot[basis] : 0;
+  const ms = monthly(dir, st, c);
+  const fy = P.focusYear, m = st.measure;
+  const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
+  const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
+  const mchart = el("div"), achart = el("div");
+  lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}`, fmt, tipFmt, series: [
+    { name: String(fy), cls: "s-now", values: yearLine(ms, fy, m), dots: true },
+    { name: String(fy - 1), cls: "s-last", values: yearLine(ms, fy - 1, m) },
+    { name: `3-year average (${fy - 3}–${String(fy - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, fy, m) },
+  ] });
+  const an = annual(ms), ly = yr(N - 1), part = mo(N - 1) < 11 ? an.length - 1 : null;
+  barChart(achart, { cats: an.map((a) => a.y), label: `${ct.name}, ${w.noun} by year`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === fy),
+    breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "whole fish from 2012",
+    partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => val(a, m) ?? 0) }] });
+  const parts = [];
+  if (dir === "imp") {
+    const sp = [0, 0, 0], fm = [0, 0, 0, 0, 0];
+    for (const r of R.imp) if (P.cur.has(r.m) && r.c === c && pass(dir, st, r)) { sp[r.s] += r.lb; fm[r.f] += r.lb; }
+    parts.push(el("div", {}, [el("p", { class: "k", text: "By species (pounds)" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] })))]));
+    parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(D.forms.map((n, i) => ({ name: n, v: fm[i], color: COLORS[i + 3] })))]));
+  } else {
+    let fresh = 0, frozen = 0;
+    for (const r of R.exp) if (P.cur.has(r.m) && r.c === c && pass(dir, st, r)) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
+    parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds, NOAA grouping)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }])]));
+  }
+  host.replaceChildren(
+    el("div", {}, [el("p", { class: "k", text: `${ct.region} · ${P.label}` }), el("h3", { text: ct.name })]),
+    el("div", { class: "stats" }, [
+      el("div", {}, [el("b", { text: lbTxt(o.lb) }), el("span", { text: "pounds" })]),
+      el("div", {}, [el("b", { text: usdTxt(o.usd) }), el("span", { text: "value" })]),
+      el("div", {}, [el("b", {}, [priceTxt(o), o.lb > 0 && o.lb < SMALL ? el("span", { class: "few", text: "few lb" }) : null]), el("span", { text: "average price" })]),
+      el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}` })]),
+      el("div", {}, [el("b", { class: ch.c, text: ch.t }), el("span", { text: P.prev ? `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` : "no earlier year" })]),
+    ]),
+    ...parts,
+    el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), mchart]),
+    el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${part != null ? ` (* ${ly} is January–${MONTH[mo(N - 1)]})` : ""}` }), achart]),
+    dir === "exp" ? el("p", { class: "note", text: FILLETS_NOTE }) : null,
+  );
+}
+
+// ---- This month ----
+function renderMonth() {
+  const L = N - 1, ly = yr(L), lm = mo(L), all = { form: "all", species: "all" };
+  const one = (dir, set) => tally(dir, all, set);
+  const im = one("imp", new Set([L])), imP = one("imp", new Set([L - 12]));
+  const ytd = new Set(range(L - lm, L)), ytdP = new Set(range(L - lm - 12, L - 12));
+  const iy = one("imp", ytd), iyP = one("imp", ytdP);
+  const ex = one("exp", new Set([L])), exP = one("exp", new Set([L - 12])), ey = one("exp", ytd), eyP = one("exp", ytdP);
+  $("#month-h").textContent = mName(L);
+  $("#month-sub").textContent = `The newest month the U.S. Census Bureau has released. Changes compare with ${mName(L - 12)}; year to date is January–${MONTH[lm]}.`;
+  const chg = (a, b) => { const c = change(a, b); return el("span", { class: c.c, text: c.t }); };
+  const topList = (t, n) => [...t.by].sort((a, b) => b[1].lb - a[1].lb).slice(0, n);
+  const sp = [0, 0, 0]; for (const r of R.imp) if (r.m === L) sp[r.s] += r.lb;
+  let fresh = 0, frozen = 0; for (const r of R.exp) if (r.m === L) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
+  const card = (k, big, lines) => el("div", { class: "card" }, [el("p", { class: "k", text: k }), el("p", { class: "big", text: big }), el("ul", { class: "lines" }, lines.map((l) => el("li", {}, l)))]);
+  const go = (dir, label) => el("button", { class: "btn alt", type: "button", style: "margin-top:10px", text: label, onclick: () => show(dir) });
+  $("#month-cards").replaceChildren(
+    card("Imports", lbTxt(im.tot.lb), [
+      [chg(im.tot.lb, imP.tot.lb), ` vs. ${mShort(L - 12)}`],
+      [el("b", { text: usdTxt(im.tot.usd) }), ` · ${priceTxt(im.tot)}`],
+      [`Year to date `, el("b", { text: lbTxt(iy.tot.lb) }), " ", chg(iy.tot.lb, iyP.tot.lb)],
+    ]),
+    el("div", { class: "card" }, [el("p", { class: "k", text: "Where imports came from" }),
+      el("ul", { class: "lines", style: "margin-top:8px" }, topList(im, 4).map(([c, o]) => el("li", {}, [el("b", { text: `${((100 * o.lb) / im.tot.lb).toFixed(1)}%` }), ` ${D.countries[c].name} (${lbTxt(o.lb)})`]))),
+      el("p", { class: "k", text: "Species", style: "margin-top:12px" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] }))), go("imp", "Imports by country")]),
+    card("Exports", lbTxt(ex.tot.lb), [
+      [chg(ex.tot.lb, exP.tot.lb), ` vs. ${mShort(L - 12)}`],
+      [el("b", { text: usdTxt(ex.tot.usd) }), ` · ${priceTxt(ex.tot)}`],
+      [`Year to date `, el("b", { text: lbTxt(ey.tot.lb) }), " ", chg(ey.tot.lb, eyP.tot.lb)],
+    ]),
+    el("div", { class: "card" }, [el("p", { class: "k", text: "Where exports went" }),
+      el("ul", { class: "lines", style: "margin-top:8px" }, [
+        ...topList(ex, 3).map(([c, o]) => el("li", {}, [el("b", { text: `${((100 * o.lb) / ex.tot.lb).toFixed(1)}%` }), ` ${D.countries[c].name}`])),
+        el("li", {}, [`${ex.by.size} destinations in all`]),
+      ]),
+      el("p", { class: "k", text: "Fresh and frozen", style: "margin-top:12px" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]), go("exp", "Exports by country")]),
+  );
+  const totLines = (dir, div, name) => {
+    const ms = monthly(dir, all);
+    const f = (v) => +(v / div).toFixed(div >= 1e6 ? 1 : 0);
+    lineChart($(`#month-${dir}-chart`), { labels: MON, label: name, fmt: (v) => nf.format(f(v)), tipFmt: (v) => `${nf.format(f(v))}${div >= 1e6 ? "M" : "K"} lb`, series: [
+      { name: String(ly), cls: "s-now", values: yearLine(ms, ly, "lb"), dots: true },
+      { name: String(ly - 1), cls: "s-last", values: yearLine(ms, ly - 1, "lb") },
+      { name: `3-year average (${ly - 3}–${String(ly - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, ly, "lb") },
+    ] });
+  };
+  totLines("imp", 1e6, "U.S. catfish imports by month, million pounds");
+  totLines("exp", 1e3, "U.S. catfish exports by month, thousand pounds");
+  $("#para").textContent = D.meta.paragraph || "The paragraph for this month isn't available yet.";
+}
+
+// ---- Long-term trends ----
+function renderTrend() {
+  const st = S.trend, m = st.measure, all = { form: "all", species: "all" };
+  syncSeg("trend-measure", m); syncSeg("trend-money", S.money);
+  $("#tr-price-note").textContent = `Dollars per pound: customs value divided by pounds, by species${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.`;
+  const L = N - 1, part = mo(L) < 11 ? yr(L) : null;
+  const years = [...new Set(D.months.map((s) => +s.slice(0, 4)))];
+  const pi = part != null ? years.length - 1 : null;
+  const fmt = m === "usd" ? (v) => `$${compact(v)}` : compact, tipFmt = m === "usd" ? usdTxt : lbTxt;
+  const sumBy = (dir, keyFn, keys) => {
+    const g = new Map(keys.map((k) => [k, years.map(() => 0)]));
+    for (const r of R[dir]) { const k = keyFn(r); if (!g.has(k)) continue; g.get(k)[years.indexOf(yr(r.m))] += m === "usd" ? r.usd : r.lb; }
+    return g;
+  };
+  // suppliers: the 4 largest over the whole span, the rest together
+  const totC = new Map(); for (const r of R.imp) totC.set(r.c, (totC.get(r.c) || 0) + r.lb);
+  const topC = [...totC].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([c]) => c);
+  const gC = sumBy("imp", (r) => (topC.includes(r.c) ? r.c : "other"), [...topC, "other"]);
+  barChart($("#tr-imp-cty"), { cats: years, partial: pi, fmt, tipFmt, label: "Imports by supplying country, by year",
+    stacks: [...topC.map((c, i) => ({ name: D.countries[c].name, color: COLORS[i], values: gC.get(c) })), { name: "All others", color: "var(--c5)", values: gC.get("other") }] });
+  const gS = sumBy("imp", (r) => r.s, [0, 1, 2]);
+  barChart($("#tr-imp-sp"), { cats: years, partial: pi, fmt, tipFmt, label: "Imports by species, by year",
+    stacks: D.species.map((n, i) => ({ name: n, color: COLORS[i], values: gS.get(i) })) });
+  const price = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of R.imp) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
+  lineChart($("#tr-price"), { labels: years.map((y) => `'${String(y).slice(2)}${y === part ? "*" : ""}`), label: "Average import price by species, dollars per pound", fmt: (v) => `$${v.toFixed(2)}`, series: [
+    { name: "All imports", cls: "s-avg", values: price(() => true) },
+    { name: D.species[0], cls: "s-now", color: COLORS[0], values: price((r) => r.s === 0) },
+    { name: D.species[1], cls: "s-now", color: COLORS[1], values: price((r) => r.s === 1) },
+  ] });
+  const regions = [...new Set(D.countries.map((c) => c.region))];
+  const totR = new Map(); for (const r of R.exp) { const g = D.countries[r.c].region; totR.set(g, (totR.get(g) || 0) + r.lb); }
+  const regOrder = [...totR].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+  const topR = regOrder.slice(0, 5);
+  const gR = sumBy("exp", (r) => (topR.includes(D.countries[r.c].region) ? D.countries[r.c].region : "other"), [...topR, "other"]);
+  barChart($("#tr-exp-reg"), { cats: years, partial: pi, fmt, tipFmt, label: "Exports by destination region, by year", breakAt: breakIdx(years), breakLabel: "whole fish from 2012",
+    stacks: [...topR.map((g, i) => ({ name: g, color: COLORS[i], values: gR.get(g) })), ...(regions.length > 5 ? [{ name: "All other regions", color: "var(--c5)", values: gR.get("other") }] : [])] });
+  $("#trend-note").textContent = `${part != null ? `* ${part} covers January–${MONTH[mo(L)]} only. ` : ""}2005–2011 come from NOAA Fisheries' trade database, which carries the Census Bureau's own figures; 2012 on comes from the Census Bureau directly. ${FILLETS_NOTE}${moneyNote()}`;
+}
+
+// ---- tabs ----
+const TABS = ["month", "imp", "exp", "trend", "about"];
+function show(tab) {
+  if (!TABS.includes(tab)) tab = "month";
+  for (const t of TABS) { $(`#${t}`).hidden = t !== tab; $(`#t-${t}`).setAttribute("aria-selected", String(t === tab)); $(`#t-${t}`).tabIndex = t === tab ? 0 : -1; }
+  if (tab === "imp" || tab === "exp") render(tab);
+  if (tab === "trend") renderTrend();
+  if (location.hash.slice(1) !== tab) history.replaceState(null, "", `#${tab}`);
+  hideTip();
+}
+for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => { show(b.dataset.tab); window.scrollTo({ top: 0 }); });
+$("[role=tablist]").addEventListener("keydown", (e) => {
+  const i = TABS.indexOf(document.activeElement?.dataset?.tab); if (i < 0) return;
+  const j = e.key === "ArrowRight" ? (i + 1) % TABS.length : e.key === "ArrowLeft" ? (i + TABS.length - 1) % TABS.length : null;
+  if (j != null) { e.preventDefault(); show(TABS[j]); $(`#t-${TABS[j]}`).focus(); }
+});
+addEventListener("scroll", hideTip, { passive: true });
+addEventListener("hashchange", () => { if (D) show(location.hash.slice(1)); });
+
+// ---- copy the paragraph ----
+$("#copy-para").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("#para").textContent); $("#copied").textContent = "Copied."; }
+  catch { const r = document.createRange(); r.selectNodeContents($("#para")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $("#copied").textContent = "Selected. Press Ctrl+C (or ⌘C) to copy."; }
+});
+
+// ---- start ----
+Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u); return r.json(); })))
+  .then(([d, g]) => {
+    D = d; G = g; N = D.months.length; IDX = new Map(D.months.map((s, i) => [s, i]));
+    Rn = { imp: D.imp.map(([m, c, f, s, lb, usd]) => ({ m, c, f, s, lb, usd })), exp: D.exp.map(([m, c, f, lb, usd]) => ({ m, c, f, s: -1, lb, usd })) };
+    const adj = (r) => ({ ...r, usd: Math.round(r.usd * D.cpi.factor[r.m]) });
+    Rr = { imp: Rn.imp.map(adj), exp: Rn.exp.map(adj) };
+    R = Rn;
+    const L = N - 1, next = new Date(`${D.meta.nextUpdate}T12:00:00`);
+    $("#asof").textContent = `U.S. imports and exports by country, through ${mName(L)}. Updated monthly; next update expected about ${MONTH[next.getMonth()]} ${next.getDate()}.`;
+    const builtAt = new Date(D.meta.built), age = Math.floor((Date.now() - builtAt) / 864e5);
+    if (age > 40) { $("#stale-row").hidden = false; $("#stale").textContent = `This page last updated ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, ${age} days ago, with data through ${mName(L)}. Newer Census data may be out.`; }
+    $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`;
+    $("#trend-money").replaceWith(moneySeg("trend-money"));
+    $("#cpi-base").textContent = `${mName(IDX.get(D.cpi.base))}`;
+    $("#trend-measure").replaceWith(segBtns("trend-measure", [["lb", "Pounds"], ["usd", "Dollars"]], S.trend.measure, (v) => { S.trend.measure = v; renderTrend(); }));
+    renderMonth();
+    show(location.hash.slice(1) || "month");
+  })
+  .catch((e) => { $("#asof").textContent = "The trade data didn't load. Please refresh the page."; console.error(e); });
+})();
+</script>
+</body>
+</html>

@@ -102,6 +102,12 @@ h3 { font: 700 18px/1.3 var(--body); margin: 0; }
 .field { display: grid; gap: 4px; min-width: 0; }
 .field > span { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .field select { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); max-width: 100%; }
+.pair { display: contents; }   /* Product and Species: side by side on a phone */
+@media (max-width: 640px) {
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .pair select { width: 100%; }
+  .pair > :only-child { grid-column: 1 / -1; }
+}
 .seg { display: inline-flex; flex-wrap: nowrap; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; max-width: 100%; }
 .seg button { border: 0; background: var(--surface); padding: 6px 12px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
 .seg button + button { border-left: 1px solid var(--rule); }
@@ -526,8 +532,16 @@ const WORD = { imp: { noun: "imports", from: "supplier", plural: "suppliers", li
   exp: { noun: "exports", from: "destination", plural: "destinations", list: "Destinations", toFrom: "to" } };
 const segBtns = (id, opts, cur, onPick) => el("div", { class: "seg", id, role: "group" }, opts.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(v === cur), "data-v": v, text: t, onclick: () => onPick(v) })));
 const field = (label, ctl) => el("div", { class: "field" }, [el("span", { text: label }), ctl]);
-function select(id, opts, cur, onPick, label) {
-  const s = el("select", { id, "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
+// the two half-width Imports menus on a phone show these instead (the font stays 16px, or iPhone Safari zooms in)
+const SHORT = { "All products": "All", "Frozen fillets": "Fillets, frozen", "Fresh or chilled fillets": "Fillets, fresh",
+  "Whole or dressed, frozen": "Whole, frozen", "Whole or dressed, fresh or chilled": "Whole, fresh",
+  "Other meat, fresh or chilled": "Other, fresh", "All species": "All", "Ictalurus (channel, blue)": "Ictalurus",
+  "Pangasius (basa, tra)": "Pangasius" };
+const PHONE = matchMedia("(max-width: 640px)");
+function select(id, opts, cur, onPick, label, short = false) {
+  const s = el("select", { id, "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t, "data-full": t })));
+  const fit = () => s.querySelectorAll("option").forEach((o) => { o.text = (short && PHONE.matches && SHORT[o.dataset.full]) || o.dataset.full; });
+  fit(); PHONE.addEventListener("change", fit);
   s.value = String(cur); s.addEventListener("change", () => onPick(s.value)); return s;
 }
 const built = { imp: false, exp: false };
@@ -538,10 +552,11 @@ function buildTrade(dir) {
   const shared = el("div", { class: "ctrls" }, [
     field("Show", segBtns(`${dir}-measure`, [["lb", "Pounds"], ["usd", "Dollars"], ["price", "$ per lb"]], st.measure, (v) => { st.measure = v; render(dir); })),
     field("Dollars", moneySeg(`${dir}-money`)),
-    field("Product", select(`${dir}-form`, dir === "imp"
+    el("div", { class: "pair" }, [field("Product", select(`${dir}-form`, dir === "imp"
       ? [["all", "All products"], ...D.forms.map((f, i) => [i, f])]
-      : [["all", "All products"], ["fresh", "Fresh (NOAA grouping)"], ["frozen", "Frozen (NOAA grouping)"]], st.form, (v) => { st.form = v; render(dir); }, "Product")),
-    dir === "imp" ? field("Species", select("imp-species", [["all", "All species"], ...D.species.map((s, i) => [i, s])], st.species, (v) => { st.species = v; render(dir); }, "Species")) : null,
+      : [["all", "All products"], ["fresh", "Fresh (NOAA grouping)"], ["frozen", "Frozen (NOAA grouping)"]], st.form, (v) => { st.form = v; render(dir); }, "Product", dir === "imp")),
+    dir === "imp" ? field("Species", select("imp-species", [["all", "All species"], ...D.species.map((s, i) => [i, s])], st.species, (v) => { st.species = v; render(dir); }, "Species", true)) : null,
+    ].filter(Boolean)),
   ]);
   // these apply to the country view only
   const local = el("div", { class: "ctrls" }, [

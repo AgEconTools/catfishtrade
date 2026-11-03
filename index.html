@@ -563,12 +563,12 @@ function buildTrade(dir) {
       : [["all", "All products"], ["fresh", "Fresh (NOAA grouping)"], ["frozen", "Frozen (NOAA grouping)"]], st.form, (v) => { st.form = v; render(dir); }, "Product")),
     dir === "imp" ? field("Species", select("imp-species", [["all", "All species"], ...D.species.map((s, i) => [i, s])], st.species, (v) => { st.species = v; render(dir); }, "Species")) : null,
   ]);
-  host.replaceChildren(
+  host.replaceChildren(...[
     el("div", {}, [el("h2", { id: `${dir}-h` }), el("p", { class: "sub", id: `${dir}-sub` })]),
     ctrls,
     el("div", { class: "card mapcard" }, [
       el("div", { class: "mapbar" }, [el("p", { class: "legend", id: `${dir}-legend` }),
-        segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => { st.zoom = v; drawMap(dir); })]),
+        segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => zoomTo(dir, v))]),
       el("div", { id: `${dir}-map` }),
     ]),
     el("div", { class: "split" }, [
@@ -576,7 +576,7 @@ function buildTrade(dir) {
       el("div", { class: "card detail", id: `${dir}-detail`, "aria-live": "polite" }),
     ]),
     dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names, as the monthly report always has: frozen fillets count as fresh, and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
-  );
+  ].filter(Boolean));
   built[dir] = true;
 }
 const moneyLabel = () => `In ${mShort(IDX.get(D.cpi.base))} dollars`;
@@ -601,7 +601,9 @@ function render(dir) {
     dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
   $(`#${dir}-h`).textContent = `U.S. catfish ${w.noun} by country`;
   $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ${lbTxt(cur.tot.lb)}, ${usdTxt(cur.tot.usd)}, ${priceTxt(cur.tot)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}.${moneyNote()}`;
-  $(`#${dir}-legend`).textContent = `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details.`;
+  const none = st.zoom !== "World" && ![...cur.by].some(([c, o]) => (o.lb > 0 || o.usd > 0) && inView(c, st.zoom));
+  $(`#${dir}-legend`).textContent = none ? `No U.S. ${w.noun} ${w.toFrom} countries in this view for ${P.label}.`
+    : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details.`;
   // ranked list
   const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
   const sbasis = st.measure === "usd" ? "usd" : "lb";
@@ -666,6 +668,18 @@ function drawMap(dir, curArg) {
       onpointermove: (e) => showTip(e, name, rows), onpointerleave: hideTip, onfocus: (e) => showTip(e, name, rows), onblur: hideTip });
   }));
 }
+// a country is "in" a map view when its marker point falls inside that view's box
+const inView = (c, zoom) => { const [x, y] = D.countries[c].at, [vx, vy, vw, vh] = G.views[zoom]; return x >= vx && x <= vx + vw && y >= vy && y <= vy + vh; };
+function zoomTo(dir, v) {
+  const st = S[dir];
+  st.zoom = v;
+  if (v !== "World" && (st.country == null || !inView(st.country, v))) {
+    const basis = st.measure === "usd" ? "usd" : "lb";
+    const best = [...tally(dir, st, period(st).cur).by].filter(([c, o]) => o[basis] > 0 && inView(c, v)).sort((a, b) => b[1][basis] - a[1][basis])[0];
+    if (best) st.country = best[0];
+  }
+  hideTip(); render(dir);
+}
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
 function drawDetail(dir, P, cur, prev) {
   const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir];
@@ -699,7 +713,7 @@ function drawDetail(dir, P, cur, prev) {
     for (const r of R.exp) if (P.cur.has(r.m) && r.c === c && pass(dir, st, r)) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
     parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds, NOAA grouping)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }])]));
   }
-  host.replaceChildren(
+  host.replaceChildren(...[
     el("div", {}, [el("p", { class: "k", text: `${ct.region} · ${P.label}` }), el("h3", { text: ct.name })]),
     el("div", { class: "stats" }, [
       el("div", {}, [el("b", { text: lbTxt(o.lb) }), el("span", { text: "pounds" })]),
@@ -708,11 +722,11 @@ function drawDetail(dir, P, cur, prev) {
       el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}` })]),
       el("div", {}, [el("b", { class: ch.c, text: ch.t }), el("span", { text: P.prev ? `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` : "no earlier year" })]),
     ]),
-    ...parts,
-    el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), mchart]),
     el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${part != null ? ` (* ${ly} is January–${MONTH[mo(N - 1)]})` : ""}` }), achart]),
     dir === "exp" ? el("p", { class: "note", text: FILLETS_NOTE }) : null,
-  );
+    ...parts,
+    el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), mchart]),
+  ].filter(Boolean));
 }
 
 // ---- This month ----

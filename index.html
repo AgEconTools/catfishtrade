@@ -893,7 +893,7 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     // more than two days past the next release date and the page hasn't moved on
     const overdue = Date.now() > next.getTime() + 2 * 864e5;
     $("#asof").textContent = `U.S. imports and exports by country, through ${mName(L)}. Updated monthly`
-      + (overdue ? "." : `; next update ${nr ? `expected ${day(next)}, when Census releases ${MONTH[+nr.month.slice(5) - 1]} data` : `expected about ${day(next)}`}.`);
+      + (overdue ? "." : `; next update ${nr ? "expected" : "expected about"} ${day(next)}.`);
     if (nr && !overdue) $("#next-release").textContent = ` (next: ${nextName} data on ${day(next)}, ${next.getFullYear()})`;
     const builtAt = new Date(D.meta.built);
     if (overdue) { $("#stale-row").hidden = false; $("#stale").textContent = `${nr ? `Census was due to release ${nextName} data on ${day(next)}` : `Newer Census data was due by ${day(next)}`}, and this page still shows data through ${mName(L)}. It updates as soon as the release is out.`; }

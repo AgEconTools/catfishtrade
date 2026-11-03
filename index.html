@@ -135,6 +135,8 @@ table.rank td { padding: 8px; border-bottom: 1px solid var(--rule); }
 table.rank .n { text-align: right; white-space: nowrap; }
 table.rank tbody tr { cursor: pointer; }
 table.rank tbody tr:hover { background: var(--accent-soft); }
+table.rank tfoot tr.pick { cursor: pointer; }
+table.rank tfoot tr.pick:hover { background: var(--accent-soft); }
 table.rank tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
 table.rank tfoot td { font-weight: 700; border-bottom: 0; border-top: 2px solid var(--rule); }
 table.rank tfoot tr.zone + tr td { font-weight: 500; color: var(--ink-2); border-top: 1px solid var(--rule); }
@@ -560,6 +562,7 @@ function buildTrade(dir) {
   host.replaceChildren(...[
     el("div", {}, [el("h2", { id: `${dir}-h` }), el("p", { class: "sub", id: `${dir}-sub` })]),
     ctrls,
+    el("div", { class: "card" }, [el("h3", { id: `${dir}-years-h` }), el("p", { class: "note", id: `${dir}-years-note`, style: "margin:4px 0 8px" }), el("div", { id: `${dir}-years` })]),
     el("div", { class: "card mapcard" }, [
       el("div", { class: "mapbar" }, [el("p", { class: "legend", id: `${dir}-legend` }),
         segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => zoomTo(dir, v))]),
@@ -591,13 +594,13 @@ function render(dir) {
   const cur = tally(dir, st, P.cur), prev = tally(dir, st, P.prev);
   const zone = st.zoom, zoned = zone !== "World";
   const rank = [...cur.by].filter(([c, o]) => (o.lb > 0 || o.usd > 0) && inZone(c, zone)).sort((a, b) => (st.measure === "usd" ? b[1].usd - a[1].usd : b[1].lb - a[1].lb));
-  if (st.country == null || !rank.some(([c]) => c === st.country)) st.country = rank.length ? rank[0][0] : null;
+  if (st.country != null && !rank.some(([c]) => c === st.country)) st.country = null;
   const filt = [st.form !== "all" ? (dir === "imp" ? D.forms[st.form].toLowerCase() : st.form === "fresh" ? "fresh (NOAA grouping)" : "frozen (NOAA grouping)") : null,
     dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
   $(`#${dir}-h`).textContent = `U.S. catfish ${w.noun} by country`;
   $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ${lbTxt(cur.tot.lb)}, ${usdTxt(cur.tot.usd)}, ${priceTxt(cur.tot)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}.${moneyNote()}`;
   $(`#${dir}-legend`).textContent = !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
-    : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details.`;
+    : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details, or a total row in the list for the whole ${zoned ? "region" : "selection"}.`;
   // ranked list
   const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
   const sbasis = st.measure === "usd" ? "usd" : "lb";
@@ -617,16 +620,35 @@ function render(dir) {
   }));
   const thead = el("thead", {}, [el("tr", {}, [el("th", { text: "Country" }), el("th", { class: mcls("lb"), text: "Pounds" }), el("th", { class: mcls("usd"), text: "Dollars" }), el("th", { class: mcls("price"), text: "$/lb" }), el("th", { class: "n", text: "Share" }), el("th", { class: "n", text: P.prev ? "vs. yr ago" : "Change" })])]);
   const zt = { lb: 0, usd: 0 }, zp = { lb: 0, usd: 0 };
-  for (const [c, o] of rank) { zt.lb += o.lb; zt.usd += o.usd; const q = prev.by.get(c); if (q) { zp.lb += q.lb; zp.usd += q.usd; } }
+  for (const [, o] of rank) { zt.lb += o.lb; zt.usd += o.usd; }
+  for (const [c, q] of prev.by) if (inZone(c, zone)) { zp.lb += q.lb; zp.usd += q.usd; }   // includes partners that stopped buying
   const zch = change(val(zt, st.measure), prev.tot ? val(zp, st.measure) : null), zsh = cur.tot[sbasis] ? (100 * zt[sbasis]) / cur.tot[sbasis] : 0;
-  const zoneRow = zoned && rank.length ? el("tr", { class: "zone" }, [el("td", { text: `${zone} total` }), el("td", { class: mcls("lb"), text: tblLb(zt.lb) }), el("td", { class: mcls("usd"), text: tblUsd(zt.usd) }), el("td", { class: mcls("price"), text: zt.lb ? `$${(zt.usd / zt.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: `${zsh < 0.1 && zsh > 0 ? "<0.1" : zsh.toFixed(1)}%` }), el("td", { class: `n ${zch.c}`, text: zch.t })]) : null;
-  const tfoot = el("tfoot", {}, [zoneRow, el("tr", {}, [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).c}`, text: change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).t })])]);
+  const totalProps = (on) => (on ? { tabindex: "0", class: "pick", "aria-selected": String(st.country == null), onclick: () => pick(dir, null), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, null); } } } : {});
+  const zoneRow = zoned && rank.length ? el("tr", { ...totalProps(true), class: "zone pick" }, [el("td", { text: `${zone} total` }), el("td", { class: mcls("lb"), text: tblLb(zt.lb) }), el("td", { class: mcls("usd"), text: tblUsd(zt.usd) }), el("td", { class: mcls("price"), text: zt.lb ? `$${(zt.usd / zt.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: `${zsh < 0.1 && zsh > 0 ? "<0.1" : zsh.toFixed(1)}%` }), el("td", { class: `n ${zch.c}`, text: zch.t })]) : null;
+  const tfoot = el("tfoot", {}, [zoneRow, el("tr", totalProps(!zoned), [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).c}`, text: change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).t })])]);
   $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
   $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zone}` : ""}, ${P.label}`;
   const early = dir === "exp" && [...P.cur, ...(P.prev || [])].some((i) => D.months[i] < (D.meta.censusFrom || "2012-01"));
   $(`#${dir}-list-note`).textContent = (early ? FILLETS_NOTE + " " : "") + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev ? ` Change compares with ${P.prevLabel}.` : ""}` : `No U.S. ${w.noun} ${w.toFrom} ${zoned ? zone : "any country"} in this selection. Choose World or another region.`);
   drawMap(dir, cur);
-  drawDetail(dir, P, cur, prev);
+  drawYears(dir, P);
+  drawDetail(dir, P, cur, prev, rank);
+}
+// annual bars for whatever the details show: the picked country, else the region or U.S. total
+// (drawn even when the period has no trade, since earlier years may)
+function drawYears(dir, P) {
+  const st = S[dir], w = WORD[dir], c = st.country, zone = st.zoom, m = st.measure;
+  const who = c != null ? D.countries[c].name : zone === "World" ? "All countries" : `All of ${zone}`;
+  const ms = monthly(dir, st, null, c != null ? (r) => r.c === c : (r) => inZone(r.c, zone));
+  const an = annual(ms), ly = yr(N - 1), part = mo(N - 1) < 11 ? an.length - 1 : null;
+  const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
+  const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
+  $(`#${dir}-years-h`).textContent = `${who}: U.S. catfish ${w.noun} by year since ${D.meta.first.slice(0, 4)}`;
+  $(`#${dir}-years-note`).textContent = `${m === "lb" ? "Pounds (product weight)" : m === "usd" ? (S.money === "real" ? `Dollars, in ${mName(IDX.get(D.cpi.base))} dollars` : "Dollars, as reported") : "Average price per pound"}.`
+    + `${part != null ? ` * ${ly} is January–${MONTH[mo(N - 1)]} only.` : ""} The outlined bar is ${P.focusYear}. Follows the country or total shown in the details below.${dir === "exp" ? " " + FILLETS_NOTE : ""}`;
+  barChart($(`#${dir}-years`), { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
+    breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "whole fish from 2012",
+    partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => val(a, m) ?? 0) }] });
 }
 const mapState = { imp: null, exp: null };
 function drawMap(dir, curArg) {
@@ -669,51 +691,50 @@ function drawMap(dir, curArg) {
 // the region buttons filter the whole tab: map, list and details (World = every country)
 const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", "South America"], Caribbean: ["Caribbean"], Asia: ["Asia"], Europe: ["Europe"] };
 const inZone = (c, zone) => zone === "World" || ZONES[zone].includes(D.countries[c].region);
-function zoomTo(dir, v) { S[dir].zoom = v; hideTip(); render(dir); }
+function zoomTo(dir, v) { S[dir].zoom = v; S[dir].country = null; hideTip(); render(dir); }
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
-function drawDetail(dir, P, cur, prev) {
-  const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir];
-  if (c == null) { host.replaceChildren(el("p", { class: "note", text: st.zoom !== "World" ? `No U.S. ${w.noun} ${w.toFrom} ${st.zoom} in ${P.label}. Choose World or another region to see a country.` : `No ${w.noun} in this selection.` })); return; }
-  const ct = D.countries[c], o = cur.by.get(c) || { lb: 0, usd: 0 }, p = prev.by.get(c);
+function drawDetail(dir, P, cur, prev, rank) {
+  const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir], zone = st.zoom, zoned = zone !== "World";
+  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}. Choose World or another region to see a country.` : `No ${w.noun} in this selection.` })); return; }
+  const whole = c == null, keep = whole ? (r) => inZone(r.c, zone) : (r) => r.c === c;
+  const sum = (t) => { const o = { lb: 0, usd: 0 }; for (const [k, v] of t.by) if (whole ? inZone(k, zone) : k === c) { o.lb += v.lb; o.usd += v.usd; } return o; };
+  const o = sum(cur), p = P.prev ? sum(prev) : null;
+  const ct = whole ? { name: zoned ? `All of ${zone}` : "All countries", region: zoned ? "Region total" : "U.S. total" } : D.countries[c];
   const basis = st.measure === "usd" ? "usd" : "lb";
-  const ch = change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null));
+  const ch = change(val(o, st.measure), p ? val(p, st.measure) : null);
   const share = cur.tot[basis] ? (100 * o[basis]) / cur.tot[basis] : 0;
-  const ms = monthly(dir, st, c);
+  const ms = monthly(dir, st, null, keep);
   const fy = P.focusYear, m = st.measure;
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
   const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
-  const mchart = el("div"), achart = el("div");
+  const mchart = el("div");
   lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}`, fmt, tipFmt, series: [
     { name: String(fy), cls: "s-now", values: yearLine(ms, fy, m), dots: true },
     { name: String(fy - 1), cls: "s-last", values: yearLine(ms, fy - 1, m) },
     { name: `3-year average (${fy - 3}–${String(fy - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, fy, m) },
   ] });
-  const an = annual(ms), ly = yr(N - 1), part = mo(N - 1) < 11 ? an.length - 1 : null;
-  barChart(achart, { cats: an.map((a) => a.y), label: `${ct.name}, ${w.noun} by year`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === fy),
-    breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "whole fish from 2012",
-    partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => val(a, m) ?? 0) }] });
   const parts = [];
   if (dir === "imp") {
     const sp = [0, 0, 0], fm = [0, 0, 0, 0, 0];
-    for (const r of R.imp) if (P.cur.has(r.m) && r.c === c && pass(dir, st, r)) { sp[r.s] += r.lb; fm[r.f] += r.lb; }
+    for (const r of R.imp) if (P.cur.has(r.m) && keep(r) && pass(dir, st, r)) { sp[r.s] += r.lb; fm[r.f] += r.lb; }
     parts.push(el("div", {}, [el("p", { class: "k", text: "By species (pounds)" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] })))]));
     parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(D.forms.map((n, i) => ({ name: n, v: fm[i], color: COLORS[i + 3] })))]));
   } else {
     let fresh = 0, frozen = 0;
-    for (const r of R.exp) if (P.cur.has(r.m) && r.c === c && pass(dir, st, r)) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
+    for (const r of R.exp) if (P.cur.has(r.m) && keep(r) && pass(dir, st, r)) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
     parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds, NOAA grouping)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }])]));
   }
   host.replaceChildren(...[
-    el("div", {}, [el("p", { class: "k", text: `${ct.region} · ${P.label}` }), el("h3", { text: ct.name })]),
+    el("div", {}, [el("p", { class: "k", text: `${ct.region} · ${P.label}` }), el("h3", { text: ct.name }),
+      whole ? null : el("button", { class: "btn alt", type: "button", style: "margin-top:8px", text: `Show ${zoned ? `all of ${zone}` : "all countries"}`, onclick: () => pick(dir, null) })]),
     el("div", { class: "stats" }, [
       el("div", {}, [el("b", { text: lbTxt(o.lb) }), el("span", { text: "pounds" })]),
       el("div", {}, [el("b", { text: usdTxt(o.usd) }), el("span", { text: "value" })]),
       el("div", {}, [el("b", {}, [priceTxt(o), o.lb > 0 && o.lb < SMALL ? el("span", { class: "few", text: "few lb" }) : null]), el("span", { text: "average price" })]),
-      el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}` })]),
+      whole && !zoned ? el("div", {}, [el("b", { text: String(rank.length) }), el("span", { text: rank.length === 1 ? WORD[dir].from : WORD[dir].plural })])
+        : el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}` })]),
       el("div", {}, [el("b", { class: ch.c, text: ch.t }), el("span", { text: P.prev ? `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` : "no earlier year" })]),
     ]),
-    el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${part != null ? ` (* ${ly} is January–${MONTH[mo(N - 1)]})` : ""}` }), achart]),
-    dir === "exp" ? el("p", { class: "note", text: FILLETS_NOTE }) : null,
     ...parts,
     el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), mchart]),
   ].filter(Boolean));

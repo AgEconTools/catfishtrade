@@ -196,6 +196,7 @@ table.rank td .few { display: block; width: fit-content; margin: 2px 0 0 auto; }
 .chart .s-avg { fill: none; stroke: var(--line-2); stroke-width: 1.4; stroke-dasharray: 5 4; }
 .chart .cross { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart .hl { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.chart .cur { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
 .readout { font-size: 13.5px; min-height: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); margin: 4px 0 0; }
 .about h3 { margin-top: 6px; }
 .about p, .about li { max-width: 78ch; }
@@ -209,6 +210,7 @@ footer { border-top: 1px solid var(--rule); background: var(--surface); }
 footer .wrap { padding-block: 26px 36px; display: grid; gap: 14px; }
 footer h2 { font-size: 20px; }
 footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
 </head>
@@ -478,7 +480,24 @@ const niceMax = (v) => { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math
 // instead of shrinking with a 640-wide drawing; hidden boxes (width 0) draw at 640
 const chartW = (host) => Math.round(Math.min(640, Math.max(300, host.clientWidth || 640)));
 const chartH = (W) => Math.round(Math.min(250, Math.max(190, W * 0.6)));
-function lineChart(host, { labels, series, fmt, tipFmt, label }) {
+// the charts work from the keyboard too (WCAG 2.1.1): tab to a chart, then the arrow keys, Home and End
+// move the same readout the pointer does
+function keyNav(svg, n, at, show, hide) {
+  svg.setAttribute("tabindex", "0");
+  svg.addEventListener("focus", () => { let kb = true; try { kb = svg.matches(":focus-visible"); } catch {} if (kb) show(at(), true); });
+  svg.addEventListener("blur", hide);
+  svg.addEventListener("keydown", (e) => {
+    const i = { ArrowLeft: at() - 1, ArrowRight: at() + 1, Home: 0, End: n - 1 }[e.key];
+    if (i == null) return;
+    e.preventDefault(); show(Math.max(0, Math.min(n - 1, i)), true);
+  });
+}
+// and the chart's values as a table for screen readers (WCAG 1.1.1), captioned with the chart's label
+// (inside a hidden wrapper: a table won't shrink to 1px, and a wide one widened the page)
+const srTable = (label, head, rows) => el("div", { class: "sr-only" }, el("table", {}, [el("caption", { text: label }),
+  el("thead", {}, el("tr", {}, head.map((h) => el("th", { scope: "col", text: h })))),
+  el("tbody", {}, rows.map(([r, ...cells]) => el("tr", {}, [el("th", { scope: "row", text: r }), ...cells.map((c) => el("td", { text: c }))])))]));
+function lineChart(host, { labels, names, series, fmt, tipFmt, label }) {   // names: full labels for the readout and table
   const W = chartW(host), H = chartH(W), L = 52, Rt = 14, T = 12, B = 28;
   const all = series.flatMap((s) => s.values).filter((v) => v != null);
   const max = niceMax(Math.max(0, ...all));
@@ -501,13 +520,19 @@ function lineChart(host, { labels, series, fmt, tipFmt, label }) {
   svg.append(cross);
   const out = el("p", { class: "readout", "aria-live": "polite" });
   const keys = el("ul", { class: "keys" }, series.map((s) => el("li", {}, [el("span", { class: `sw ${s.cls === "s-avg" ? "dash" : "ln"}`, style: s.cls === "s-avg" ? null : `background:${s.color || (s.cls === "s-now" ? "var(--line-1)" : "var(--line-3)")}` }), s.name])));
+  const val = (s, i) => (s.values[i] == null ? "–" : (tipFmt || fmt)(s.values[i]));
+  let cur = labels.length - 1;
   const show = (i) => {
+    cur = i;
     cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
-    out.textContent = `${labels[i]}: ` + series.map((s) => `${s.name} ${s.values[i] == null ? "–" : (tipFmt || fmt)(s.values[i])}`).join(" · ");
+    out.textContent = `${(names || labels)[i]}: ` + series.map((s) => `${s.name} ${val(s, i)}`).join(" · ");
   };
+  const hide = () => { cross.setAttribute("visibility", "hidden"); out.textContent = ""; };
   svg.addEventListener("pointermove", (e) => { const r = svg.getBoundingClientRect(); const px = ((e.clientX - r.left) / r.width) * W; show(Math.max(0, Math.min(labels.length - 1, Math.round(((px - L) / (W - L - Rt)) * (labels.length - 1))))); });
-  svg.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); out.textContent = ""; });
-  host.replaceChildren(svg, keys, out);
+  svg.addEventListener("pointerleave", hide);
+  keyNav(svg, labels.length, () => cur, show, hide);
+  host.replaceChildren(svg, keys, out, srTable(label, [names ? "Year" : "Month", ...series.map((s) => s.name)],
+    (names || labels).map((t, i) => [t, ...series.map((s) => val(s, i))])));
 }
 function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, breakAt, breakLabel }) {
   const W = chartW(host), H = chartH(W), L = 52, Rt = 8, T = 12, B = 28;
@@ -536,14 +561,28 @@ function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, bre
   }
   const out = el("p", { class: "readout", "aria-live": "polite" });
   const keys = stacks.length > 1 ? el("ul", { class: "keys" }, stacks.map((s) => el("li", {}, [el("span", { class: "sw", style: `background:${s.color}` }), s.name]))) : null;
+  const tf = tipFmt || fmt, catTxt = (i) => `${cats[i]}${partial === i ? " (part year)" : ""}`;
+  // a dashed box marks the bar the keyboard is on (the pointer is its own marker)
+  const mark = sv("rect", { class: "cur", y: T - 3, width: bw * 0.72 + 6, height: H - B - T + 3, visibility: "hidden" });
+  svg.append(mark);
+  let cur = cats.length - 1;
+  const show = (i, kb) => {
+    cur = i;
+    mark.setAttribute("x", L + i * bw + bw * 0.14 - 3); mark.setAttribute("visibility", kb ? "visible" : "hidden");
+    const parts = stacks.length > 1 ? stacks.filter((s) => s.values[i]).map((s) => `${s.name} ${tf(s.values[i])}`) : [];
+    out.textContent = `${catTxt(i)}: ${tf(totals[i])}${parts.length ? "; " + parts.join(" · ") : ""}`;
+  };
+  const hide = () => { mark.setAttribute("visibility", "hidden"); out.textContent = ""; };
   svg.addEventListener("pointermove", (e) => {
     const r = svg.getBoundingClientRect(); const px = ((e.clientX - r.left) / r.width) * W;
-    const i = Math.max(0, Math.min(cats.length - 1, Math.floor((px - L) / bw)));
-    const parts = stacks.length > 1 ? stacks.filter((s) => s.values[i]).map((s) => `${s.name} ${(tipFmt || fmt)(s.values[i])}`) : [];
-    out.textContent = `${cats[i]}${partial === i ? " (part year)" : ""}: ${(tipFmt || fmt)(totals[i])}${parts.length ? "; " + parts.join(" · ") : ""}`;
+    show(Math.max(0, Math.min(cats.length - 1, Math.floor((px - L) / bw))));
   });
-  svg.addEventListener("pointerleave", () => { out.textContent = ""; });
-  host.replaceChildren(...[svg, keys, out].filter(Boolean));
+  svg.addEventListener("pointerleave", hide);
+  keyNav(svg, cats.length, () => cur, show, hide);
+  const multi = stacks.length > 1;
+  const table = srTable(label, ["Year", ...(multi ? ["Total"] : []), ...stacks.map((s) => s.name)],
+    cats.map((_, i) => [catTxt(i), ...(multi ? [tf(totals[i])] : []), ...stacks.map((s) => tf(s.values[i] || 0))]));
+  host.replaceChildren(...[svg, keys, out, table].filter(Boolean));
 }
 const mixBar = (parts) => {
   const tot = parts.reduce((s, p) => s + p.v, 0);
@@ -661,6 +700,7 @@ function drawOverTime(dir) {
   const used = groups.map((g, i) => ({ ...g, sum: sums[i] })).filter((g, i) => (i < named && st.by !== "species") || g.sum.some((o) => o.lb || o.usd));
   const host = $(`#${dir}-ot`), label = `U.S. catfish ${w.noun} by year`;
   const ylabels = years.map((y, k) => `'${String(y).slice(2)}${k === part ? "*" : ""}`);
+  const ynames = years.map((y, k) => `${y}${k === part ? " (part year)" : ""}`);
   if (m === "price") {
     const pr = (o) => (o.lb > 1000 ? o.usd / o.lb : null);
     const all = years.map((_, k) => sums.reduce((a, g) => ({ lb: a.lb + g[k].lb, usd: a.usd + g[k].usd }), { lb: 0, usd: 0 }));
@@ -668,7 +708,7 @@ function drawOverTime(dir) {
     const lbOf = (g) => g.sum.reduce((a, o) => a + o.lb, 0);
     const lines = st.by === "total" ? [] : used.filter((g, i) => i < named && lbOf(g) > 0).sort((a, b) => lbOf(b) - lbOf(a)).slice(0, 2);
     if (lines.length) how = ` All ${w.noun} and the 2 largest ${st.by === "species" ? "species" : st.by === "region" ? "destination regions" : w.plural} since ${years[0]} by pounds.`;
-    lineChart(host, { labels: ylabels, label, fmt: (v) => `$${v.toFixed(2)}`, series: [
+    lineChart(host, { labels: ylabels, names: ynames, label, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: `All ${w.noun}`, cls: "s-avg", values: all.map(pr) },
       ...lines.map((g) => ({ name: g.name, cls: "s-now", color: g.color, values: g.sum.map(pr) })),
     ] });
@@ -683,7 +723,7 @@ function drawOverTime(dir) {
   if (dir === "imp") {
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
     $("#imp-price-note").textContent = `Dollars per pound: customs value (before freight, insurance and duties) divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
-    lineChart($("#imp-price"), { labels: ylabels, label: "Average import price by species, dollars per pound", fmt: (v) => `$${v.toFixed(2)}`, series: [
+    lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: "Average import price by species, dollars per pound", fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: "All imports", cls: "s-avg", values: pr(() => true) },
       ...D.species.slice(0, 2).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),
     ] });

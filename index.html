@@ -218,7 +218,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
     <div><h2 id="month-h">This month</h2><p class="sub" id="month-sub"></p></div>
     <div class="cards" id="month-cards"></div>
     <p class="note">Pounds are product weight, as shipped: a pound of fillets is a pound of fillets, not the live weight
-      of the fish they came from, so these figures can't be compared directly with pond production.</p>
+      of the fish they came from.</p>
     <div class="two">
       <div class="card"><h3>U.S. catfish imports by month</h3><p class="note">Million pounds.</p><div id="month-imp-chart"></div></div>
       <div class="card"><h3>U.S. catfish exports by month</h3><p class="note">Thousand pounds.</p><div id="month-exp-chart"></div></div>
@@ -256,18 +256,16 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       <p>Import records name the species: channel catfish (<i>Ictalurus</i>), Pangasius (basa and tra), or other catfish
         (<i>Clarias</i>, <i>Silurus</i> and others). Export records don't name a species.</p>
       <h3>Fresh and frozen exports</h3>
-      <p>Exports are split into fresh and frozen the way NOAA Fisheries names them, which is how the monthly report has
-        always been published: frozen fillets (0304.62) count as <b>fresh</b> along with fresh fillets and fresh whole fish,
+      <p>Exports are split into fresh and frozen the way NOAA Fisheries names them: frozen fillets (0304.62) count as <b>fresh</b> along with fresh fillets and fresh whole fish,
         and only frozen whole or dressed fish (0303.24) counts as frozen. Census's own descriptions would put frozen fillets
         under frozen.</p>
       <h3>How it's measured</h3>
       <ul>
         <li><b>Imports</b> are imports for consumption (pounds) and the customs value of general imports (dollars), the basis NOAA
           Fisheries uses. A few shipments show a value but no pounds; they count in dollars only.</li>
-        <li><b>Exports</b> are domestic exports only: U.S.-produced catfish. Re-exports of imported catfish are left out.</li>
+        <li><b>Exports</b> are domestic exports only: catfish of U.S. origin. Re-exports of imported catfish are left out.</li>
         <li><b>Pounds</b> are product weight, as shipped, converted from Census's kilograms (1 kg = 2.20462 lb). A pound of
-          fillets is a pound of fillets, not the live weight of the fish it came from, so these figures can't be compared
-          directly with pond production or processors' live-weight purchases.</li>
+          fillets is a pound of fillets, not the live weight of the fish it came from.</li>
         <li><b>Dollars</b> are the declared customs value. <b>Price per pound</b> is dollars divided by pounds: an average unit
           value, not a market price. Prices resting on under 10,000 lb are marked <span class="few">few lb</span>.</li>
         <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the Imports and Exports tabs.
@@ -281,9 +279,6 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       <p>The U.S. Census Bureau releases each month's trade about five weeks after the month ends, on a date between the 2nd
         and the 12th. This page updates on the 12th. Each update also re-pulls the current and previous year, so recent
         months pick up Census's revisions.</p>
-      <h3>Not included</h3>
-      <p>U.S. catfish production, processing, prices or inventories; other fish and seafood; state or port detail (U.S.
-        totals by partner country only); and anything before 2005.</p>
     </div>
   </section>
 </main>
@@ -571,7 +566,7 @@ function buildTrade(dir) {
       el("div", { class: "card" }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` })]),
       el("div", { class: "card detail", id: `${dir}-detail`, "aria-live": "polite" }),
     ]),
-    dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names, as the monthly report always has: frozen fillets count as fresh, and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
+    dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names: frozen fillets count as fresh, and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
   ].filter(Boolean));
   built[dir] = true;
 }

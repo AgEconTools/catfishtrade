@@ -137,6 +137,7 @@ table.rank tbody tr { cursor: pointer; }
 table.rank tbody tr:hover { background: var(--accent-soft); }
 table.rank tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
 table.rank tfoot td { font-weight: 700; border-bottom: 0; border-top: 2px solid var(--rule); }
+table.rank tfoot tr.zone + tr td { font-weight: 500; color: var(--ink-2); border-top: 1px solid var(--rule); }
 .rb { display: inline-block; width: 60px; height: 9px; background: var(--none); border-radius: 3px; vertical-align: middle; margin-left: 6px; overflow: hidden; }
 .rb i { display: block; height: 100%; background: var(--accent); }
 /* The list shares its row with the country detail: show only the chosen
@@ -173,7 +174,6 @@ table.rank tfoot td { font-weight: 700; border-bottom: 0; border-top: 2px solid 
 .chart .cross { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart .hl { fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .readout { font-size: 13.5px; min-height: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); margin: 4px 0 0; }
-.para { font-size: 16px; line-height: 1.6; margin: 0; max-width: 80ch; }
 .about h3 { margin-top: 6px; }
 .about p, .about li { max-width: 78ch; }
 table.codes { border-collapse: collapse; font-size: 14px; }
@@ -219,12 +219,6 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
     <div class="two">
       <div class="card"><h3>U.S. catfish imports by month</h3><p class="note">Million pounds.</p><div id="month-imp-chart"></div></div>
       <div class="card"><h3>U.S. catfish exports by month</h3><p class="note">Thousand pounds.</p><div id="month-exp-chart"></div></div>
-    </div>
-    <div class="card" id="para-card">
-      <h3>This month's trade paragraph</h3>
-      <p class="note">The paragraph in MSU Extension's monthly catfish report, word for word.</p>
-      <p class="para" id="para"></p>
-      <p style="margin:12px 0 0"><button class="btn alt" id="copy-para" type="button">Copy paragraph</button> <span class="note" id="copied" role="status"></span></p>
     </div>
   </section>
 
@@ -381,7 +375,7 @@ let Rn, Rr;                     // rows in dollars as reported, and in base-mont
 const S = {
   money: "nom",
   imp: { period: "12m", year: null, measure: "lb", form: "all", species: "all", country: null, zoom: "World" },
-  exp: { period: "12m", year: null, measure: "lb", form: "all", country: null, zoom: "Americas" },
+  exp: { period: "12m", year: null, measure: "lb", form: "all", country: null, zoom: "World" },
   trend: { measure: "lb" },
 };
 const pass = (dir, st, r) => {
@@ -595,14 +589,14 @@ function render(dir) {
   $(`#${dir}-year`).value = st.period === "year" ? String(st.year) : "";
   syncSeg(`${dir}-measure`, st.measure); syncSeg(`${dir}-zoom`, st.zoom); syncSeg(`${dir}-money`, S.money);
   const cur = tally(dir, st, P.cur), prev = tally(dir, st, P.prev);
-  const rank = [...cur.by].filter(([, o]) => o.lb > 0 || o.usd > 0).sort((a, b) => (st.measure === "usd" ? b[1].usd - a[1].usd : b[1].lb - a[1].lb));
-  if (st.country == null || !cur.by.has(st.country)) st.country = rank.length ? rank[0][0] : null;
+  const zone = st.zoom, zoned = zone !== "World";
+  const rank = [...cur.by].filter(([c, o]) => (o.lb > 0 || o.usd > 0) && inZone(c, zone)).sort((a, b) => (st.measure === "usd" ? b[1].usd - a[1].usd : b[1].lb - a[1].lb));
+  if (st.country == null || !rank.some(([c]) => c === st.country)) st.country = rank.length ? rank[0][0] : null;
   const filt = [st.form !== "all" ? (dir === "imp" ? D.forms[st.form].toLowerCase() : st.form === "fresh" ? "fresh (NOAA grouping)" : "frozen (NOAA grouping)") : null,
     dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
   $(`#${dir}-h`).textContent = `U.S. catfish ${w.noun} by country`;
   $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ${lbTxt(cur.tot.lb)}, ${usdTxt(cur.tot.usd)}, ${priceTxt(cur.tot)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}.${moneyNote()}`;
-  const none = st.zoom !== "World" && ![...cur.by].some(([c, o]) => (o.lb > 0 || o.usd > 0) && inView(c, st.zoom));
-  $(`#${dir}-legend`).textContent = none ? `No U.S. ${w.noun} ${w.toFrom} countries in this view for ${P.label}.`
+  $(`#${dir}-legend`).textContent = !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
     : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details.`;
   // ranked list
   const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
@@ -622,11 +616,15 @@ function render(dir) {
     return tr;
   }));
   const thead = el("thead", {}, [el("tr", {}, [el("th", { text: "Country" }), el("th", { class: mcls("lb"), text: "Pounds" }), el("th", { class: mcls("usd"), text: "Dollars" }), el("th", { class: mcls("price"), text: "$/lb" }), el("th", { class: "n", text: "Share" }), el("th", { class: "n", text: P.prev ? "vs. yr ago" : "Change" })])]);
-  const tfoot = el("tfoot", {}, [el("tr", {}, [el("td", { text: "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).c}`, text: change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).t })])]);
+  const zt = { lb: 0, usd: 0 }, zp = { lb: 0, usd: 0 };
+  for (const [c, o] of rank) { zt.lb += o.lb; zt.usd += o.usd; const q = prev.by.get(c); if (q) { zp.lb += q.lb; zp.usd += q.usd; } }
+  const zch = change(val(zt, st.measure), prev.tot ? val(zp, st.measure) : null), zsh = cur.tot[sbasis] ? (100 * zt[sbasis]) / cur.tot[sbasis] : 0;
+  const zoneRow = zoned && rank.length ? el("tr", { class: "zone" }, [el("td", { text: `${zone} total` }), el("td", { class: mcls("lb"), text: tblLb(zt.lb) }), el("td", { class: mcls("usd"), text: tblUsd(zt.usd) }), el("td", { class: mcls("price"), text: zt.lb ? `$${(zt.usd / zt.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: `${zsh < 0.1 && zsh > 0 ? "<0.1" : zsh.toFixed(1)}%` }), el("td", { class: `n ${zch.c}`, text: zch.t })]) : null;
+  const tfoot = el("tfoot", {}, [zoneRow, el("tr", {}, [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).c}`, text: change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).t })])]);
   $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
-  $(`#${dir}-list-h`).textContent = `${w.list}, ${P.label}`;
+  $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zone}` : ""}, ${P.label}`;
   const early = dir === "exp" && [...P.cur, ...(P.prev || [])].some((i) => D.months[i] < (D.meta.censusFrom || "2012-01"));
-  $(`#${dir}-list-note`).textContent = (early ? FILLETS_NOTE + " " : "") + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}.${P.prev ? ` Change compares with ${P.prevLabel}.` : ""}` : `No ${w.noun} in this selection.`);
+  $(`#${dir}-list-note`).textContent = (early ? FILLETS_NOTE + " " : "") + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev ? ` Change compares with ${P.prevLabel}.` : ""}` : `No U.S. ${w.noun} ${w.toFrom} ${zoned ? zone : "any country"} in this selection. Choose World or another region.`);
   drawMap(dir, cur);
   drawDetail(dir, P, cur, prev);
 }
@@ -649,12 +647,12 @@ function drawMap(dir, curArg) {
   ms.svg.setAttribute("viewBox", vb.join(" "));
   const byGeo = new Map(D.countries.map((c, i) => [c.geo, i]));
   for (const [name, p] of ms.paths) {
-    const c = byGeo.get(name), has = c != null && cur.by.has(c);
+    const c = byGeo.get(name), has = c != null && cur.by.has(c) && inZone(c, st.zoom);
     p.setAttribute("class", `land${has ? " has" : ""}${c != null && c === st.country ? " sel" : ""}`);
     p.onclick = has ? () => pick(dir, c) : null;
   }
   const basis = st.measure === "usd" ? "usd" : "lb";
-  const items = [...cur.by].filter(([, o]) => o[basis] > 0).sort((a, b) => b[1][basis] - a[1][basis]);
+  const items = [...cur.by].filter(([c, o]) => o[basis] > 0 && inZone(c, st.zoom)).sort((a, b) => b[1][basis] - a[1][basis]);
   const max = items.length ? items[0][1][basis] : 1;
   const RMAX = 34 * Math.pow(k, 0.55);
   ms.bubs.replaceChildren(...items.map(([c, o]) => {
@@ -668,22 +666,14 @@ function drawMap(dir, curArg) {
       onpointermove: (e) => showTip(e, name, rows), onpointerleave: hideTip, onfocus: (e) => showTip(e, name, rows), onblur: hideTip });
   }));
 }
-// a country is "in" a map view when its marker point falls inside that view's box
-const inView = (c, zoom) => { const [x, y] = D.countries[c].at, [vx, vy, vw, vh] = G.views[zoom]; return x >= vx && x <= vx + vw && y >= vy && y <= vy + vh; };
-function zoomTo(dir, v) {
-  const st = S[dir];
-  st.zoom = v;
-  if (v !== "World" && (st.country == null || !inView(st.country, v))) {
-    const basis = st.measure === "usd" ? "usd" : "lb";
-    const best = [...tally(dir, st, period(st).cur).by].filter(([c, o]) => o[basis] > 0 && inView(c, v)).sort((a, b) => b[1][basis] - a[1][basis])[0];
-    if (best) st.country = best[0];
-  }
-  hideTip(); render(dir);
-}
+// the region buttons filter the whole tab: map, list and details (World = every country)
+const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", "South America"], Caribbean: ["Caribbean"], Asia: ["Asia"], Europe: ["Europe"] };
+const inZone = (c, zone) => zone === "World" || ZONES[zone].includes(D.countries[c].region);
+function zoomTo(dir, v) { S[dir].zoom = v; hideTip(); render(dir); }
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
 function drawDetail(dir, P, cur, prev) {
   const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir];
-  if (c == null) { host.replaceChildren(el("p", { class: "note", text: `No ${w.noun} in this selection.` })); return; }
+  if (c == null) { host.replaceChildren(el("p", { class: "note", text: st.zoom !== "World" ? `No U.S. ${w.noun} ${w.toFrom} ${st.zoom} in ${P.label}. Choose World or another region to see a country.` : `No ${w.noun} in this selection.` })); return; }
   const ct = D.countries[c], o = cur.by.get(c) || { lb: 0, usd: 0 }, p = prev.by.get(c);
   const basis = st.measure === "usd" ? "usd" : "lb";
   const ch = change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null));
@@ -777,7 +767,6 @@ function renderMonth() {
   };
   totLines("imp", 1e6, "U.S. catfish imports by month, million pounds");
   totLines("exp", 1e3, "U.S. catfish exports by month, thousand pounds");
-  $("#para").textContent = D.meta.paragraph || "The paragraph for this month isn't available yet.";
 }
 
 // ---- Long-term trends ----
@@ -837,12 +826,6 @@ $("[role=tablist]").addEventListener("keydown", (e) => {
 });
 addEventListener("scroll", hideTip, { passive: true });
 addEventListener("hashchange", () => { if (D) show(location.hash.slice(1)); });
-
-// ---- copy the paragraph ----
-$("#copy-para").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText($("#para").textContent); $("#copied").textContent = "Copied."; }
-  catch { const r = document.createRange(); r.selectNodeContents($("#para")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $("#copied").textContent = "Selected. Press Ctrl+C (or ⌘C) to copy."; }
-});
 
 // ---- start ----
 Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u); return r.json(); })))

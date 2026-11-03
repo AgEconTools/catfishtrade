@@ -197,6 +197,7 @@ table.rank td .few { display: block; width: fit-content; margin: 2px 0 0 auto; }
 .chart .cross { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart .hl { fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .chart .cur { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart:focus:not(:focus-visible) { outline: none; }   /* a mouse click or tap focuses the chart too; the ring is for the keyboard */
 .readout { font-size: 13.5px; min-height: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); margin: 4px 0 0; }
 .about h3 { margin-top: 6px; }
 .about p, .about li { max-width: 78ch; }

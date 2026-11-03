@@ -276,9 +276,10 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
           what importers pay.</li>
       </ul>
       <h3>When it updates</h3>
-      <p>The U.S. Census Bureau releases each month's trade about five weeks after the month ends, on a date between the 2nd
-        and the 12th. This page updates on the 12th. Each update also re-pulls the current and previous year, so recent
-        months pick up Census's revisions.</p>
+      <p>The U.S. Census Bureau releases each month's trade about five weeks after the month ends, at 8:30 a.m. Eastern on
+        dates it <a href="https://www.census.gov/foreign-trade/schedule.html">publishes about a year ahead</a>. This page
+        updates the morning of each release<span id="next-release"></span>. Each update also re-pulls the current and
+        previous year, so recent months pick up Census's revisions.</p>
     </div>
   </section>
 </main>
@@ -864,7 +865,9 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     Rr = { imp: Rn.imp.map(adj), exp: Rn.exp.map(adj) };
     R = Rn;
     const L = N - 1, next = new Date(`${D.meta.nextUpdate}T12:00:00`);
-    $("#asof").textContent = `U.S. imports and exports by country, through ${mName(L)}. Updated monthly; next update expected about ${MONTH[next.getMonth()]} ${next.getDate()}.`;
+    const nr = D.meta.nextRelease;
+    $("#asof").textContent = `U.S. imports and exports by country, through ${mName(L)}. Updated monthly; next update ${nr ? `expected ${MONTH[next.getMonth()]} ${next.getDate()}, when Census releases ${MONTH[+nr.month.slice(5) - 1]} data` : `expected about ${MONTH[next.getMonth()]} ${next.getDate()}`}.`;
+    if (nr) $("#next-release").textContent = ` (next: ${MONTH[+nr.month.slice(5) - 1]} ${nr.month.slice(0, 4)} data on ${MONTH[next.getMonth()]} ${next.getDate()}, ${next.getFullYear()})`;
     const builtAt = new Date(D.meta.built), age = Math.floor((Date.now() - builtAt) / 864e5);
     if (age > 40) { $("#stale-row").hidden = false; $("#stale").textContent = `This page last updated ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, ${age} days ago, with data through ${mName(L)}. Newer Census data may be out.`; }
     $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`;

@@ -154,13 +154,21 @@ table.rank tfoot tr.zone + tr td { font-weight: 500; color: var(--ink-2); border
 /* The list shares its row with the country detail: show only the chosen
    measure's column until there's room for pounds, dollars and price together. */
 @media (max-width: 1120px) { table.rank .opt:not(.on) { display: none; } }
+/* the page tops out at 1120px, so with all three the list box stays about 535px wide:
+   tighter cells and a shorter share bar keep "vs. yr ago" in view */
+@media (min-width: 1121px) { table.rank td, table.rank th { padding: 8px 6px; } table.rank .rb { width: 44px; } }
 @media (max-width: 640px) { .rb { display: none; } }
 @media (max-width: 420px) {   /* after the base table rules, so these win */
   table.rank { font-size: 13.5px; }
   table.rank td, table.rank th { padding: 7px 4px; }
   table.rank th, table.rank th.n { font-size: 11px; letter-spacing: .02em; white-space: normal; vertical-align: bottom; }
 }
+@media (max-width: 340px) {   /* one-word names like "Philippines" can't wrap */
+  table.rank { font-size: 12.5px; }
+  table.rank td, table.rank th { padding: 7px 3px; }
+}
 .few { background: var(--warn-bg); color: var(--warn-ink); font-weight: 600; padding: 0 5px; border-radius: 4px; font-size: 12px; margin-left: 4px; }
+table.rank td .few { display: block; width: fit-content; margin: 2px 0 0 auto; }   /* under the price, so it doesn't widen the column */
 .detail { display: grid; gap: 14px; }
 .detail h3 { font: 700 22px/1.2 var(--display); }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }

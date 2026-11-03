@@ -245,7 +245,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       <p>Mixed codes that also hold other fish (such as tilapia, carp or eels) are left out, because they can't be split.</p>
       <h3>2005 to 2011</h3>
       <p>These years come from NOAA Fisheries' Foreign Trade database, which carries the Census Bureau's own trade figures
-        under the catfish codes in use before 2012 (they match Census to the pound where both exist). Imports cover the same
+        under the catfish codes in use before 2012 (they match Census's own figures where both exist). Imports cover the same
         species and products as later years, except a few other-catfish whole fish. <b>Exports before 2012 count fillets
         only</b>; whole and dressed catfish exports are counted from 2012, so export totals step up that year.</p>
       <h3>Why it starts in 2005</h3>
@@ -253,12 +253,14 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         Vietnam was recorded as "marine fish" or "freshwater fish" fillets, mixed with other fish, so earlier catfish import
         figures would undercount it. 2005 is the first full year with complete catfish detail.</p>
       <h3>Species</h3>
-      <p>Import records name the species: channel catfish (<i>Ictalurus</i>), Pangasius (basa and tra), or other catfish
-        (<i>Clarias</i>, <i>Silurus</i> and others). Export records don't name a species.</p>
+      <p>Import records name the species: <i>Ictalurus</i> (channel and blue catfish), <i>Pangasius</i> (basa and tra), or
+        other catfish (<i>Clarias</i>, <i>Silurus</i>, and records that don't name a species). Export records don't name a
+        species.</p>
       <h3>Fresh and frozen exports</h3>
-      <p>Exports are split into fresh and frozen the way NOAA Fisheries names them: frozen fillets (0304.62) count as <b>fresh</b> along with fresh fillets and fresh whole fish,
-        and only frozen whole or dressed fish (0303.24) counts as frozen. Census's own descriptions would put frozen fillets
-        under frozen.</p>
+      <p>Exports are split into fresh and frozen by NOAA Fisheries' product names. From 2012, NOAA names frozen fillets
+        (0304.62) as fresh, so they count as <b>fresh</b> along with fresh fillets and fresh whole fish, and only frozen whole
+        or dressed fish (0303.24) counts as frozen; Census's own descriptions would put frozen fillets under frozen. Before
+        2012, NOAA names fresh and frozen fillets separately, and they count that way.</p>
       <h3>How it's measured</h3>
       <ul>
         <li><b>Imports</b> are imports for consumption (pounds) and the customs value of general imports (dollars), the basis NOAA
@@ -267,7 +269,8 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         <li><b>Pounds</b> are product weight, as shipped, converted from Census's kilograms (1 kg = 2.20462 lb). A pound of
           fillets is a pound of fillets, not the live weight of the fish it came from.</li>
         <li><b>Dollars</b> are the declared customs value. <b>Price per pound</b> is dollars divided by pounds: an average unit
-          value, not a market price. Prices resting on under 10,000 lb are marked <span class="few">few lb</span>.</li>
+          value, not a market price. Prices resting on under 10,000 lb are marked <span class="few">few lb</span>; price charts
+          leave out years under 1,000 lb.</li>
         <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the Imports and Exports tabs.
           Adjusted dollars are converted to <span id="cpi-base">the newest month's</span> dollars with the Consumer Price Index
           for All Urban Consumers (CPI-U, U.S. city average, U.S. Bureau of Labor Statistics). BLS published no CPI for October
@@ -353,6 +356,7 @@ function change(cur, prev) {
   if (!prev) return cur ? { t: "new", c: "up" } : { t: "–", c: "flat" };
   const p = (cur / prev - 1) * 100;
   if (Math.abs(p) < 0.5) return { t: "same", c: "flat" };
+  if (p >= 900) return { t: `${nf.format(Math.round(cur / prev))}×`, c: "up" };   // "159×" reads better than "+15,824%"
   return { t: `${p > 0 ? "+" : "−"}${Math.abs(p) >= 10 ? Math.round(Math.abs(p)) : Math.abs(p).toFixed(1)}%`, c: p > 0 ? "up" : "down" };
 }
 
@@ -550,7 +554,7 @@ function buildTrade(dir) {
   const byOpts = dir === "imp" ? [["total", "Total"], ["country", "By country"], ["species", "By species"]] : [["total", "Total"], ["region", "By region"]];
   host.replaceChildren(...[
     el("div", {}, [el("h2", { text: `U.S. catfish ${w.noun} since ${D.meta.first.slice(0, 4)}` }),
-      el("p", { class: "sub", text: `Every year, all countries together. ${dir === "imp" ? "Show, Dollars, Product and Species" : "Show, Dollars and Product"} also apply to ${w.noun} by country, further down.` })]),
+      el("p", { class: "sub", text: `Annual totals. ${dir === "imp" ? "Show, Dollars, Product and Species" : "Show, Dollars and Product"} apply here and to ${w.noun} by country below.` })]),
     shared,
     el("div", { class: "card" }, [
       el("div", { class: "cardbar" }, [el("h3", { text: `${Noun} by year` }), segBtns(`${dir}-by`, byOpts, st.by, (v) => { st.by = v; drawOverTime(dir); })]),
@@ -567,7 +571,7 @@ function buildTrade(dir) {
       el("div", { class: "card" }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` })]),
       el("div", { class: "card detail", id: `${dir}-detail`, "aria-live": "polite" }),
     ]),
-    dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names: frozen fillets count as fresh, and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
+    dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names: from 2012, frozen fillets count as fresh and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
   ].filter(Boolean));
   built[dir] = true;
 }
@@ -630,7 +634,8 @@ function setMoney(v) {
   const tab = TABS.find((t) => !$(`#${t}`).hidden);
   if (tab === "imp" || tab === "exp") render(tab);
 }
-const moneyNote = () => (S.money === "real" ? ` Dollars are in ${mName(IDX.get(D.cpi.base))} terms, adjusted for inflation with the CPI-U.` : "");
+const moneyNote = () => (S.money !== "real" ? "" : ` Dollars are in ${mName(IDX.get(D.cpi.base))} terms, adjusted for inflation with the CPI-U.`
+  + (D.cpi.base < D.months.at(-1) ? ` The CPI-U runs only through ${mName(IDX.get(D.cpi.base))}, so later months are left as reported.` : ""));
 function syncSeg(id, v) { for (const b of document.querySelectorAll(`#${id} button`)) b.setAttribute("aria-pressed", String(b.dataset.v === String(v))); }
 function render(dir) {
   if (!built[dir]) buildTrade(dir);
@@ -675,7 +680,8 @@ function render(dir) {
   const tfoot = el("tfoot", {}, [zoneRow, el("tr", totalProps(!zoned), [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).c}`, text: change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null).t })])]);
   $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
   $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zone}` : ""}, ${P.label}`;
-  const early = dir === "exp" && [...P.cur, ...(P.prev || [])].some((i) => D.months[i] < (D.meta.censusFrom || "2012-01"));
+  const cf = D.meta.censusFrom || "2012-01";
+  const early = dir === "exp" && ([...P.cur, ...(P.prev || [])].some((i) => D.months[i] < cf) || P.focusYear - 3 < +cf.slice(0, 4));
   $(`#${dir}-list-note`).textContent = (early ? FILLETS_NOTE + " " : "") + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev ? ` Change compares with ${P.prevLabel}.` : ""}` : `No U.S. ${w.noun} ${w.toFrom} ${zoned ? zone : "any country"} in this selection. Choose World or another region.`);
   drawMap(dir, cur);
   drawOverTime(dir);
@@ -691,7 +697,7 @@ function drawYears(dir, P, host) {
   const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
   barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
     breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "whole fish from 2012",
-    partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => val(a, m) ?? 0) }] });
+    partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => (m === "price" && a.lb < 1000 ? 0 : val(a, m) ?? 0)) }] });
 }
 const mapState = { imp: null, exp: null };
 function drawMap(dir, curArg) {
@@ -710,9 +716,11 @@ function drawMap(dir, curArg) {
   ms.cur = cur;
   const vb = G.views[st.zoom], k = vb[2] / G.w;
   ms.svg.setAttribute("viewBox", vb.join(" "));
-  const byGeo = new Map(D.countries.map((c, i) => [c.geo, i]));
+  const byGeo = new Map();
+  D.countries.forEach((c, i) => byGeo.set(c.geo, [...(byGeo.get(c.geo) || []), i]));
   for (const [name, p] of ms.paths) {
-    const c = byGeo.get(name), has = c != null && cur.by.has(c) && inZone(c, st.zoom);
+    const ids = byGeo.get(name) || [], c = ids.find((i) => cur.by.has(i) && inZone(i, st.zoom)) ?? ids[0];
+    const has = c != null && cur.by.has(c) && inZone(c, st.zoom);
     p.setAttribute("class", `land${has ? " has" : ""}${c != null && c === st.country ? " sel" : ""}`);
     p.onclick = has ? () => pick(dir, c) : null;
   }
@@ -725,7 +733,7 @@ function drawMap(dir, curArg) {
     const r = Math.max(2.2 * Math.pow(k, 0.55), RMAX * Math.sqrt(o[basis] / max));
     const name = D.countries[c].name;
     const share = cur.tot[basis] ? ((100 * o[basis]) / cur.tot[basis]).toFixed(1) : "0";
-    const rows = [["Pounds", lbTxt(o.lb)], ["Dollars", usdTxt(o.usd)], ["Price", priceTxt(o)], ["Share", `${share}%`]];
+    const rows = [["Pounds", lbTxt(o.lb)], ["Dollars", usdTxt(o.usd)], ["Price", `${priceTxt(o)}${o.lb > 0 && o.lb < SMALL ? " (few lb)" : ""}`], ["Share", `${share}%`]];
     return sv("circle", { class: `bub${c === st.country ? " sel" : ""}`, cx, cy, r: r.toFixed(2), tabindex: "0", role: "button", "aria-label": `${name}: ${lbTxt(o.lb)}, ${usdTxt(o.usd)}, ${share}% of the total`,
       onclick: () => pick(dir, c), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, c); } },
       onpointermove: (e) => showTip(e, name, rows), onpointerleave: hideTip, onfocus: (e) => showTip(e, name, rows), onblur: hideTip });
@@ -865,11 +873,15 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     Rr = { imp: Rn.imp.map(adj), exp: Rn.exp.map(adj) };
     R = Rn;
     const L = N - 1, next = new Date(`${D.meta.nextUpdate}T12:00:00`);
-    const nr = D.meta.nextRelease;
-    $("#asof").textContent = `U.S. imports and exports by country, through ${mName(L)}. Updated monthly; next update ${nr ? `expected ${MONTH[next.getMonth()]} ${next.getDate()}, when Census releases ${MONTH[+nr.month.slice(5) - 1]} data` : `expected about ${MONTH[next.getMonth()]} ${next.getDate()}`}.`;
-    if (nr) $("#next-release").textContent = ` (next: ${MONTH[+nr.month.slice(5) - 1]} ${nr.month.slice(0, 4)} data on ${MONTH[next.getMonth()]} ${next.getDate()}, ${next.getFullYear()})`;
-    const builtAt = new Date(D.meta.built), age = Math.floor((Date.now() - builtAt) / 864e5);
-    if (age > 40) { $("#stale-row").hidden = false; $("#stale").textContent = `This page last updated ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, ${age} days ago, with data through ${mName(L)}. Newer Census data may be out.`; }
+    const nr = D.meta.nextRelease, day = (d) => `${MONTH[d.getMonth()]} ${d.getDate()}`;
+    const nextName = nr ? `${MONTH[+nr.month.slice(5) - 1]} ${nr.month.slice(0, 4)}` : null;
+    // more than two days past the next release date and the page hasn't moved on
+    const overdue = Date.now() > next.getTime() + 2 * 864e5;
+    $("#asof").textContent = `U.S. imports and exports by country, through ${mName(L)}. Updated monthly`
+      + (overdue ? "." : `; next update ${nr ? `expected ${day(next)}, when Census releases ${MONTH[+nr.month.slice(5) - 1]} data` : `expected about ${day(next)}`}.`);
+    if (nr && !overdue) $("#next-release").textContent = ` (next: ${nextName} data on ${day(next)}, ${next.getFullYear()})`;
+    const builtAt = new Date(D.meta.built);
+    if (overdue) { $("#stale-row").hidden = false; $("#stale").textContent = `${nr ? `Census was due to release ${nextName} data on ${day(next)}` : `Newer Census data was due by ${day(next)}`}, and this page still shows data through ${mName(L)}. It updates as soon as the release is out.`; }
     $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${builtAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`;
     $("#cpi-base").textContent = `${mName(IDX.get(D.cpi.base))}`;
     renderMonth();

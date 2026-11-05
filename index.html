@@ -50,6 +50,10 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 v
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 a { color: var(--link); }
+/* "Skip to content": off screen until the keyboard reaches it */
+.skip { position: absolute; left: 16px; top: -200px; z-index: 30; background: var(--surface); color: var(--ink); border: 1px solid var(--rule); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
+.skip:focus { top: calc(8px + env(safe-area-inset-top, 0px)); }
+main:focus { outline: none; }
 .num { font-variant-numeric: tabular-nums; }
 
 /* masthead */
@@ -120,6 +124,8 @@ h3 { font: 700 18px/1.3 var(--body); margin: 0; }
 @media (max-width: 640px) { .seg button { padding: 6px 9px; font-size: 13px; } }
 @media (max-width: 420px) { .seg button { padding: 6px 7px; font-size: 12.5px; } }
 @media (max-width: 340px) { .seg button { padding: 6px 5px; font-size: 12px; } }
+.seg.chips { flex-wrap: wrap; border: 0; border-radius: 0; gap: 6px; overflow: visible; }   /* seven regions: separate pills that wrap */
+.seg.chips button { border: 1px solid var(--rule); border-radius: 999px; }
 .btn { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
 .btn.alt { background: var(--surface); color: var(--ink); border: 1px solid var(--rule); }
 .btn:hover { filter: brightness(1.1); }
@@ -151,7 +157,7 @@ table.rank tbody tr { cursor: pointer; }
 table.rank tbody tr:hover { background: var(--accent-soft); }
 table.rank tfoot tr.pick { cursor: pointer; }
 table.rank tfoot tr.pick:hover { background: var(--accent-soft); }
-table.rank tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+table.rank tr[aria-current="true"] { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
 table.rank tfoot td { font-weight: 700; border-bottom: 0; border-top: 2px solid var(--rule); }
 table.rank tfoot tr.zone + tr td { font-weight: 500; color: var(--ink-2); border-top: 1px solid var(--rule); }
 .rb { display: inline-block; width: 60px; height: 9px; background: var(--none); border-radius: 3px; vertical-align: middle; margin-left: 6px; overflow: hidden; }
@@ -217,6 +223,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="mast">
   <div class="wrap">
     <h1>U.S. Catfish Trade</h1>
@@ -235,7 +242,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
   </div>
 </nav>
 
-<main class="wrap">
+<main class="wrap" id="main" tabindex="-1">
   <!-- This month -->
   <section class="panel" id="month" role="tabpanel" aria-labelledby="t-month">
     <div><h2 id="month-h">This month</h2><p class="sub" id="month-sub"></p></div>
@@ -257,13 +264,17 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
     <div><h2>About the data</h2><p class="sub">What's counted, how it's measured, and where it comes from.</p></div>
     <div class="card">
       <h3>What's counted</h3>
-      <p>All U.S. trade in catfish (the order Siluriformes). From 2012 on, the Harmonized System codes that hold only catfish:</p>
+      <p>All U.S. trade in catfish, meaning every species in the order Siluriformes. By U.S. law, only North American
+        catfish (channel, blue and their relatives) can be sold as "catfish" in the United States, but trade codes count
+        all catfish species, including Pangasius (basa, tra, swai), so this page does too. Use the Species filter on the
+        Imports tab to see <i>Ictalurus</i> alone.</p>
+      <p>From 2012 on, the Harmonized System codes that hold only catfish:</p>
       <div class="tablewrap" style="max-height:none"><table class="codes"><thead><tr><th>Code</th><th>Product</th><th>Counted in</th></tr></thead><tbody>
-        <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports; exports (as fresh, see below)</td></tr>
+        <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports and exports (exports counted as fresh, see below)</td></tr>
         <tr><td>0304.32</td><td>Fresh or chilled fillets</td><td>Imports and exports</td></tr>
         <tr><td>0303.24</td><td>Whole or dressed, frozen</td><td>Imports and exports</td></tr>
         <tr><td>0302.72</td><td>Whole or dressed, fresh or chilled</td><td>Imports and exports</td></tr>
-        <tr><td>0304.51.0010, .0015</td><td>Other meat, fresh or chilled (<i>Ictalurus</i> and Pangasius only)</td><td>Imports</td></tr>
+        <tr><td>0304.51 (catfish lines only)</td><td>Other meat, fresh or chilled (<i>Ictalurus</i> and Pangasius only)</td><td>Imports</td></tr>
       </tbody></table></div>
       <p>Mixed codes that also hold other fish (such as tilapia, carp or eels) are left out, because they can't be split.</p>
       <h3>2005 to 2011</h3>
@@ -280,10 +291,10 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         other catfish (<i>Clarias</i>, <i>Silurus</i>, and records that don't name a species). Export records don't name a
         species.</p>
       <h3>Fresh and frozen exports</h3>
-      <p>Exports are split into fresh and frozen by NOAA Fisheries' product names. From 2012, NOAA names frozen fillets
-        (0304.62) as fresh, so they count as <b>fresh</b> along with fresh fillets and fresh whole fish, and only frozen whole
-        or dressed fish (0303.24) counts as frozen; Census's own descriptions would put frozen fillets under frozen. Before
-        2012, NOAA names fresh and frozen fillets separately, and they count that way.</p>
+      <p>Frozen fillets (0304.62) count as <b>fresh</b> exports on this page, with fresh fillets and fresh whole fish; only
+        frozen whole or dressed fish (0303.24) counts as frozen. That follows NOAA Fisheries' product names, so these
+        figures match NOAA's. To see the four products separately, use the Product filter on the Exports tab. For 2005 to
+        2011, exports are fillets only, and frozen fillets count as frozen.</p>
       <h3>How it's measured</h3>
       <ul>
         <li><b>Imports</b> are imports for consumption (pounds) and the customs value of general imports (dollars), the basis NOAA
@@ -319,7 +330,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
   <div class="wrap">
     <section id="disclaimer" aria-labelledby="disc-h">
       <h2 id="disc-h">Disclaimer</h2>
-      <p>For educational use only. This page summarizes U.S. Census Bureau trade statistics. It is not a forecast or
+      <p>For educational use only. This page summarizes U.S. Census Bureau and NOAA Fisheries trade statistics. It is not a forecast or
         financial, legal or marketing advice, and you use it at your own risk.</p>
       <details class="method"><summary>Full disclaimer</summary>
         <p style="margin-top:8px">Trade statistics are revised after release and can contain errors. Prices per pound are
@@ -340,7 +351,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         origin, disability, age, sexual orientation, genetic information, status as a U.S. veteran, or any other status to
         the extent protected by applicable law. Questions about equal opportunity programs or compliance should be directed
         to the <a href="https://www.civilrights.msstate.edu/">Office of Civil Rights Compliance</a>, 231 Famous Maroon Band
-        Street, P.O. 6044, Mississippi State, MS 39762.</p>
+        Street, P.O. Box 6044, Mississippi State, MS 39762.</p>
       <p class="note">Copyright <span id="foot-year"></span> by Mississippi State University. All rights reserved.
         <a href="https://www.msstate.edu">www.msstate.edu</a></p>
     </div>
@@ -411,16 +422,15 @@ const S = {
   imp: { period: "12m", year: null, measure: "lb", form: "all", species: "all", country: null, zoom: "World", by: "country" },
   exp: { period: "12m", year: null, measure: "lb", form: "all", country: null, zoom: "World", by: "region" },
 };
-const pass = (dir, st, r) => {
-  if (dir === "imp") {
-    if (st.form !== "all" && r.f !== +st.form) return false;
-    if (st.species !== "all" && r.s !== +st.species) return false;
-  } else {
-    if (st.form === "fresh" && r.f === 2) return false;
-    if (st.form === "frozen" && r.f !== 2) return false;
-  }
-  return true;
-};
+const pass = (dir, st, r) => !(st.form !== "all" && r.f !== +st.form) && !(dir === "imp" && st.species !== "all" && r.s !== +st.species);
+// Export fresh/frozen: from 2012 only whole or dressed frozen fish counts as frozen (NOAA's product names
+// call frozen fillets fresh); before 2012 frozen fillets count as frozen. See About the data.
+const isFrozen = (r) => r.f === 2 || (r.f === 0 && D.months[r.m] < (D.meta.censusFrom || "2012-01"));
+const FROZEN_NOTE = "Frozen fillets count as fresh here. See About the data.";
+const CHINA_NOTE = " Since April 2026, China's Ictalurus shipments include fresh or chilled fillets at frozen-fillet prices, as reported by Census.";
+const EXP_FORMS = [1, 0, 3, 2];   // fresh fillets, frozen fillets, whole fresh, whole frozen
+// the unit for a chart's label (its hidden table's caption)
+const unitTxt = (m) => (m === "lb" ? "pounds" : (m === "usd" ? "dollars" : "dollars per pound") + (S.money === "real" ? `, in ${mName(IDX.get(D.cpi.base))} dollars` : ""));
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, k) => a + k);
 function period(st) {
   const L = N - 1, ly = yr(L), lm = mo(L);
@@ -615,7 +625,7 @@ const hideTip = () => { tip.hidden = true; };
 // ---- Imports / Exports tab ----
 const WORD = { imp: { noun: "imports", from: "supplier", plural: "suppliers", list: "Supplying countries", toFrom: "from" },
   exp: { noun: "exports", from: "destination", plural: "destinations", list: "Destinations", toFrom: "to" } };
-const segBtns = (id, opts, cur, onPick) => el("div", { class: "seg", id, role: "group" }, opts.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(v === cur), "data-v": v, text: t, onclick: () => onPick(v) })));
+const segBtns = (id, opts, cur, onPick, cls = "") => el("div", { class: `seg${cls ? " " + cls : ""}`, id, role: "group" }, opts.map(([v, t]) => el("button", { type: "button", "aria-pressed": String(v === cur), "data-v": v, text: t, onclick: () => onPick(v) })));
 const field = (label, ctl) => el("div", { class: "field" }, [el("span", { text: label }), ctl]);
 // the two half-width Imports menus on a phone show these instead (the font stays 16px, or iPhone Safari zooms in)
 const SHORT = { "All products": "All", "Frozen fillets": "Fillets, frozen", "Fresh or chilled fillets": "Fillets, fresh",
@@ -637,9 +647,8 @@ function buildTrade(dir) {
   const shared = el("div", { class: "ctrls" }, [
     field("Show", segBtns(`${dir}-measure`, [["lb", "Pounds"], ["usd", "Dollars"], ["price", "$ per lb"]], st.measure, (v) => { st.measure = v; render(dir); })),
     field("Dollars", moneySeg(`${dir}-money`)),
-    el("div", { class: "pair" }, [field("Product", select(`${dir}-form`, dir === "imp"
-      ? [["all", "All products"], ...D.forms.map((f, i) => [i, f])]
-      : [["all", "All products"], ["fresh", "Fresh (NOAA grouping)"], ["frozen", "Frozen (NOAA grouping)"]], st.form, (v) => { st.form = v; render(dir); }, "Product", dir === "imp")),
+    el("div", { class: "pair" }, [field("Product", select(`${dir}-form`, [["all", "All products"],
+      ...(dir === "imp" ? D.forms.map((f, i) => [i, f]) : EXP_FORMS.map((i) => [i, D.forms[i]]))], st.form, (v) => { st.form = v; render(dir); }, "Product", true)),
     dir === "imp" ? field("Species", select("imp-species", [["all", "All species"], ...D.species.map((s, i) => [i, s])], st.species, (v) => { st.species = v; render(dir); }, "Species", true)) : null,
     ].filter(Boolean)),
   ]);
@@ -649,7 +658,7 @@ function buildTrade(dir) {
       segBtns(`${dir}-period`, [["latest", "Latest month"], ["ytd", "Year to date"], ["12m", "Last 12 months"]], st.period, (v) => { st.period = v; st.year = null; render(dir); }),
       select(`${dir}-year`, [["", "Pick a year"], ...years.map((y) => [y, y === yr(L) && mo(L) < 11 ? `${y} (${janToShort(mo(L))})` : String(y)])], "", (v) => { st.period = v ? "year" : "12m"; st.year = v ? +v : null; render(dir); }, "Calendar year"),
     ])),
-    field("Region", segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => zoomTo(dir, v))),
+    field("Region", segBtns(`${dir}-zoom`, Object.keys(G.views).map((k) => [k, k]), st.zoom, (v) => zoomTo(dir, v), "chips")),
   ]);
   const byOpts = dir === "imp" ? [["total", "Total"], ["country", "By country"], ["species", "By species"]] : [["total", "Total"], ["region", "By region"]];
   host.replaceChildren(...[
@@ -671,7 +680,6 @@ function buildTrade(dir) {
       el("div", { class: "card" }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` })]),
       el("div", { class: "card detail", id: `${dir}-detail`, "aria-live": "polite" }),
     ]),
-    dir === "exp" ? el("p", { class: "note", text: "Fresh and frozen follow NOAA Fisheries' product names: from 2012, frozen fillets count as fresh and only frozen whole or dressed fish counts as frozen. See About the data." }) : null,
   ].filter(Boolean));
   built[dir] = true;
 }
@@ -700,7 +708,7 @@ function drawOverTime(dir) {
   const sums = groups.map(() => years.map(() => ({ lb: 0, usd: 0 })));
   for (const r of rows) { const g = groups.findIndex((x) => x.keep(r)); const o = sums[g][years.indexOf(yr(r.m))]; o.lb += r.lb; o.usd += r.usd; }
   const used = groups.map((g, i) => ({ ...g, sum: sums[i] })).filter((g, i) => (i < named && st.by !== "species") || g.sum.some((o) => o.lb || o.usd));
-  const host = $(`#${dir}-ot`), label = `U.S. catfish ${w.noun} by year`;
+  const host = $(`#${dir}-ot`), label = `U.S. catfish ${w.noun} by year, ${unitTxt(m)}`;
   const ylabels = years.map((y, k) => `'${String(y).slice(2)}${k === part ? "*" : ""}`);
   const ynames = years.map((y, k) => `${y}${k === part ? " (part year)" : ""}`);
   if (m === "price") {
@@ -724,8 +732,8 @@ function drawOverTime(dir) {
   $(`#${dir}-ot-note`).textContent = `${unit}.${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
   if (dir === "imp") {
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
-    $("#imp-price-note").textContent = `Dollars per pound: customs value (before freight, insurance and duties) divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
-    lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: "Average import price by species, dollars per pound", fmt: (v) => `$${v.toFixed(2)}`, series: [
+    $("#imp-price-note").textContent = `Dollars per pound: customs value (before freight, insurance and duties) divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}${CHINA_NOTE}`;
+    lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: `Average import price by species, ${unitTxt("price")}`, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: "All imports", cls: "s-avg", values: pr(() => true) },
       ...D.species.slice(0, 2).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),
     ] });
@@ -752,7 +760,7 @@ function render(dir) {
   const zone = st.zoom, zoned = zone !== "World";
   const rank = [...cur.by].filter(([c, o]) => (o.lb > 0 || o.usd > 0) && inZone(c, zone)).sort((a, b) => (st.measure === "usd" ? b[1].usd - a[1].usd : b[1].lb - a[1].lb));
   if (st.country != null && !rank.some(([c]) => c === st.country)) st.country = null;
-  const filt = [st.form !== "all" ? (dir === "imp" ? D.forms[st.form].toLowerCase() : st.form === "fresh" ? "fresh (NOAA grouping)" : "frozen (NOAA grouping)") : null,
+  const filt = [st.form !== "all" ? D.forms[st.form].toLowerCase() : null,
     dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
   $(`#${dir}-h`).textContent = `${w.noun[0].toUpperCase() + w.noun.slice(1)} by country`;
   const zsum = rank.reduce((a, [, o]) => ({ lb: a.lb + o.lb, usd: a.usd + o.usd }), { lb: 0, usd: 0 }), T = zoned ? zsum : cur.tot;
@@ -770,7 +778,7 @@ function render(dir) {
   const tbody = el("tbody", {}, rank.map(([c, o]) => {
     const p = prev.by.get(c), ch = nc ? NC : change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null));
     const share = cur.tot[sbasis] ? (100 * o[sbasis]) / cur.tot[sbasis] : 0;
-    const tr = el("tr", { tabindex: "0", "aria-selected": String(c === st.country), onclick: () => pick(dir, c), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, c); } } }, [
+    const tr = el("tr", { tabindex: "0", "aria-current": c === st.country ? "true" : null, onclick: () => pick(dir, c), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, c); } } }, [
       el("td", { text: D.countries[c].name }),
       el("td", { class: mcls("lb") }, [tblLb(o.lb)]),
       el("td", { class: mcls("usd") }, [tblUsd(o.usd)]),
@@ -786,7 +794,7 @@ function render(dir) {
   for (const [c, q] of prev.by) if (inZone(c, zone)) { zp.lb += q.lb; zp.usd += q.usd; }   // includes partners that stopped buying
   const zch = nc ? NC : change(val(zt, st.measure), prev.tot ? val(zp, st.measure) : null),
     tch = nc ? NC : change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null), zsh = cur.tot[sbasis] ? (100 * zt[sbasis]) / cur.tot[sbasis] : 0;
-  const totalProps = (on) => (on ? { tabindex: "0", class: "pick", "aria-selected": String(st.country == null), onclick: () => pick(dir, null), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, null); } } } : {});
+  const totalProps = (on) => (on ? { tabindex: "0", class: "pick", "aria-current": st.country == null ? "true" : null, onclick: () => pick(dir, null), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, null); } } } : {});
   const zoneRow = zoned && rank.length ? el("tr", { ...totalProps(true), class: "zone pick" }, [el("td", { text: `${zone} total` }), el("td", { class: mcls("lb"), text: tblLb(zt.lb) }), el("td", { class: mcls("usd"), text: tblUsd(zt.usd) }), el("td", { class: mcls("price"), text: zt.lb ? `$${(zt.usd / zt.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: `${zsh < 0.1 && zsh > 0 ? "<0.1" : zsh.toFixed(1)}%` }), el("td", { class: `n ${zch.c}`, text: zch.t, title: zch.title })]) : null;
   const tfoot = el("tfoot", {}, [zoneRow, el("tr", totalProps(!zoned), [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${tch.c}`, text: tch.t, title: tch.title })])]);
   $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
@@ -806,7 +814,7 @@ function drawYears(dir, P, host) {
   const an = annual(ms), part = mo(N - 1) < 11 ? an.length - 1 : null;
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
   const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => (v > 0 ? `$${v.toFixed(2)}/lb` : "– (under 1,000 lb)");
-  barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
+  barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year, ${unitTxt(m)}`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
     breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "Whole/dressed from 2012",
     partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => (m === "price" && a.lb < 1000 ? 0 : val(a, m) ?? 0)) }] });
 }
@@ -815,7 +823,7 @@ function drawMap(dir, curArg) {
   const st = S[dir], host = $(`#${dir}-map`);
   let ms = mapState[dir];
   if (!ms) {
-    const svg = sv("svg", { class: "mapsvg", role: "img", "aria-label": `World map of U.S. catfish ${WORD[dir].noun} by country` });
+    const svg = sv("svg", { class: "mapsvg", role: "group", "aria-label": `World map of U.S. catfish ${WORD[dir].noun} by country` });
     const land = sv("g"), bubs = sv("g");
     const paths = new Map();
     for (const s of G.shapes) { const p = sv("path", { class: "land", d: s.d }); paths.set(s.n, p); land.append(p); }
@@ -851,7 +859,8 @@ function drawMap(dir, curArg) {
   }));
 }
 // the region buttons filter the whole tab: map, list and details (World = every country)
-const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", "South America"], Caribbean: ["Caribbean"], Asia: ["Asia"], Europe: ["Europe"] };
+const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", "South America"], Caribbean: ["Caribbean"], Europe: ["Europe"],
+  "Middle East and Africa": ["Middle East and North Africa", "Sub-Saharan Africa"], Asia: ["Asia"], Oceania: ["Oceania"] };   // one per map view in the export
 const inZone = (c, zone) => zone === "World" || ZONES[zone].includes(D.countries[c].region);
 function zoomTo(dir, v) { S[dir].zoom = v; S[dir].country = null; hideTip(); render(dir); }
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
@@ -880,8 +889,11 @@ function drawDetail(dir, P, cur, prev, rank) {
     parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(D.forms.map((n, i) => ({ name: n, v: fm[i], color: COLORS[i + 3] })))]));
   } else {
     let fresh = 0, frozen = 0;
-    for (const r of R.exp) if (P.cur.has(r.m) && keep(r) && pass(dir, st, r)) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
-    parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds, NOAA grouping)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }])]));
+    const fm = [0, 0, 0, 0];
+    for (const r of R.exp) if (P.cur.has(r.m) && keep(r) && pass(dir, st, r)) { fm[r.f] += r.lb; if (isFrozen(r)) frozen += r.lb; else fresh += r.lb; }
+    parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]),
+      fresh || frozen ? el("p", { class: "note", style: "margin-top:6px", text: FROZEN_NOTE }) : null]));
+    parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(EXP_FORMS.map((i) => ({ name: D.forms[i], v: fm[i], color: COLORS[i + 3] })))]));
   }
   host.replaceChildren(...[
     el("div", {}, [el("p", { class: "k", text: `${ct.region} · ${P.label}` }), el("h3", { text: ct.name }),
@@ -900,7 +912,7 @@ function drawDetail(dir, P, cur, prev, rank) {
   ].filter(Boolean));
   // drawn once the boxes are on the page, so the charts know their width
   if (yearsBox) drawYears(dir, P, yearsBox);
-  lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}`, fmt, tipFmt, series: [
+  lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}, ${unitTxt(m)}`, fmt, tipFmt, series: [
     { name: String(fy), cls: "s-now", values: yearLine(ms, fy, m), dots: true },
     fy - 1 >= yr(0) ? { name: String(fy - 1), cls: "s-last", values: yearLine(ms, fy - 1, m) } : null,
     fy - 3 >= yr(0) ? { name: `3-year average (${fy - 3}–${String(fy - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, fy, m) } : null,
@@ -916,13 +928,14 @@ function renderMonth() {
   const iy = one("imp", ytd), iyP = one("imp", ytdP);
   const ex = one("exp", new Set([L])), exP = one("exp", new Set([L - 12])), ey = one("exp", ytd), eyP = one("exp", ytdP);
   $("#month-h").textContent = mName(L);
-  $("#month-sub").textContent = `The newest month the U.S. Census Bureau has released. Changes compare with ${mName(L - 12)}; year to date is ${janTo(lm)}.`;
+  $("#month-sub").textContent = `The newest month the U.S. Census Bureau has released. Changes compare with ${mName(L - 12)}; year to date is ${janTo(lm)}. Census revises recent months in later releases.`;
   const chg = (a, b) => { const c = change(a, b); return el("span", { class: c.c, text: c.t }); };
   const topList = (t, n) => [...t.by].sort((a, b) => b[1].lb - a[1].lb).slice(0, n);
   const sp = [0, 0, 0]; for (const r of R.imp) if (r.m === L) sp[r.s] += r.lb;
-  let fresh = 0, frozen = 0; for (const r of R.exp) if (r.m === L) { if (r.f === 2) frozen += r.lb; else fresh += r.lb; }
+  let fresh = 0, frozen = 0; for (const r of R.exp) if (r.m === L) { if (isFrozen(r)) frozen += r.lb; else fresh += r.lb; }
   const card = (k, big, lines) => el("div", { class: "card" }, [el("p", { class: "k", text: k }), el("p", { class: "big", text: big }), el("ul", { class: "lines" }, lines.map((l) => el("li", {}, l)))]);
-  const go = (dir, label) => el("button", { class: "btn alt", type: "button", style: "margin-top:10px", text: label, onclick: () => show(dir) });
+  // opens the tab at its "by country" section, which is what the button names
+  const go = (dir, label) => el("button", { class: "btn alt", type: "button", style: "margin-top:10px", text: label, onclick: () => { show(dir); $(`#${dir}-h`).scrollIntoView({ block: "start" }); } });
   $("#month-cards").replaceChildren(
     card("Imports", lbTxt(im.tot.lb), [
       [chg(im.tot.lb, imP.tot.lb), ` vs. ${mShort(L - 12)}`],
@@ -930,8 +943,11 @@ function renderMonth() {
       [`Year to date `, el("b", { text: lbTxt(iy.tot.lb) }), " ", chg(iy.tot.lb, iyP.tot.lb)],
     ]),
     el("div", { class: "card" }, [el("p", { class: "k", text: "Where imports came from" }),
-      el("ul", { class: "lines", style: "margin-top:8px" }, topList(im, 4).map(([c, o]) => el("li", {}, [el("b", { text: `${((100 * o.lb) / im.tot.lb).toFixed(1)}%` }), ` ${D.countries[c].name} (${lbTxt(o.lb)})`]))),
-      el("p", { class: "k", text: "Species", style: "margin-top:12px" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] }))), go("imp", "Imports by country")]),
+      el("ul", { class: "lines", style: "margin-top:8px" }, [
+        ...topList(im, 4).map(([c, o]) => el("li", {}, [el("b", { text: `${((100 * o.lb) / im.tot.lb).toFixed(1)}%` }), ` ${D.countries[c].name} (${lbTxt(o.lb)})`])),
+        el("li", {}, [`${im.by.size} ${im.by.size === 1 ? "supplier" : "suppliers"} in all`]),
+      ]),
+      el("p", { class: "k", text: "Species (pounds)", style: "margin-top:12px" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] }))), go("imp", "Imports by country")]),
     card("Exports", lbTxt(ex.tot.lb), [
       [chg(ex.tot.lb, exP.tot.lb), ` vs. ${mShort(L - 12)}`],
       [el("b", { text: usdTxt(ex.tot.usd) }), ` · ${priceTxt(ex.tot)}`],
@@ -940,9 +956,10 @@ function renderMonth() {
     el("div", { class: "card" }, [el("p", { class: "k", text: "Where exports went" }),
       el("ul", { class: "lines", style: "margin-top:8px" }, [
         ...topList(ex, 3).map(([c, o]) => el("li", {}, [el("b", { text: `${((100 * o.lb) / ex.tot.lb).toFixed(1)}%` }), ` ${D.countries[c].name}`])),
-        el("li", {}, [`${ex.by.size} destinations in all`]),
+        el("li", {}, [`${ex.by.size} ${ex.by.size === 1 ? "destination" : "destinations"} in all`]),
       ]),
-      el("p", { class: "k", text: "Fresh and frozen", style: "margin-top:12px" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]), go("exp", "Exports by country")]),
+      el("p", { class: "k", text: "Fresh and frozen (pounds)", style: "margin-top:12px" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]),
+      el("p", { class: "note", style: "margin-top:6px", text: FROZEN_NOTE }), go("exp", "Exports by country")]),
   );
   const totLines = (dir, div, name) => {
     const ms = monthly(dir, all);
@@ -959,7 +976,8 @@ function renderMonth() {
 
 // ---- tabs ----
 const TABS = ["month", "imp", "exp", "about"];
-const tabOf = (h) => (h === "trend" ? "imp" : TABS.includes(h) ? h : null);   // trends merged into Imports and Exports (2026-11-03)
+const ALIAS = { trend: "imp", imports: "imp", exports: "exp" };   // trends merged into Imports and Exports (2026-11-03); full names for links
+const tabOf = (h) => ALIAS[h] || (TABS.includes(h) ? h : null);
 function show(tab, keepHash = false) {
   tab = tabOf(tab) || "month";
   for (const t of TABS) { $(`#${t}`).hidden = t !== tab; $(`#t-${t}`).setAttribute("aria-selected", String(t === tab)); $(`#t-${t}`).tabIndex = t === tab ? 0 : -1; }

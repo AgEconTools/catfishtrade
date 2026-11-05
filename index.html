@@ -268,7 +268,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         catfish (channel, blue and their relatives) can be sold as "catfish" in the United States, but trade codes count
         all catfish species, including Pangasius (basa, tra, swai), so this page does too. Use the Species filter on the
         Imports tab to see <i>Ictalurus</i> alone.</p>
-      <p>From 2012 on, the Harmonized System codes that hold only catfish:</p>
+      <p>From 2012 on, the trade codes (Harmonized System) that hold only catfish:</p>
       <div class="tablewrap" style="max-height:none"><table class="codes"><thead><tr><th>Code</th><th>Product</th><th>Counted in</th></tr></thead><tbody>
         <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports and exports (exports counted as fresh, see below)</td></tr>
         <tr><td>0304.32</td><td>Fresh or chilled fillets</td><td>Imports and exports</td></tr>
@@ -280,7 +280,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       <h3>2005 to 2011</h3>
       <p>These years come from NOAA Fisheries' Foreign Trade database, which carries the Census Bureau's own trade figures
         under the catfish codes in use before 2012 (they match Census's own figures where both exist). Imports cover the same
-        species and products as later years, except a few other-catfish whole fish. <b>Exports before 2012 count fillets
+        species and products as later years, apart from a small amount of whole fish of other catfish species. <b>Exports before 2012 count fillets
         only</b>; whole and dressed catfish exports are counted from 2012, so export totals step up that year.</p>
       <h3>Why it starts in 2005</h3>
       <p>Catfish imports were first reported by species in July 2004. Before that, much of the basa and tra imported from
@@ -290,15 +290,16 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       <p>Import records name the species: <i>Ictalurus</i> (channel and blue catfish), <i>Pangasius</i> (basa, tra and swai), or
         other catfish (<i>Clarias</i>, <i>Silurus</i>, and records that don't name a species). Export records don't name a
         species.</p>
-      <h3>Fresh and frozen exports</h3>
+      <h3 id="fresh-frozen">Fresh and frozen exports</h3>
       <p>Frozen fillets (0304.62) count as <b>fresh</b> exports on this page, with fresh fillets and fresh whole fish; only
         frozen whole or dressed fish (0303.24) counts as frozen. That follows NOAA Fisheries' product names, so these
         figures match NOAA's. To see the four products separately, use the Product filter on the Exports tab. For 2005 to
         2011, exports are fillets only, and frozen fillets count as frozen.</p>
       <h3>How it's measured</h3>
       <ul>
-        <li><b>Imports</b> are imports for consumption (pounds) and the customs value of general imports (dollars), the basis NOAA
-          Fisheries uses. A few shipments show a value but no pounds; they count in dollars only.</li>
+        <li><b>Imports.</b> Pounds count fish that cleared customs for use in the United States (Census calls these imports for
+          consumption). Dollars are the customs value of all arrivals (general imports). NOAA Fisheries reports catfish trade
+          the same way. A few shipments show a value but no pounds; they count in dollars only.</li>
         <li><b>Catfish-only codes.</b> Only product codes that hold catfish alone are counted. NOAA Fisheries' catfish totals
           also take in codes catfish shares with carp, eels, tilapia and other fish (mostly dried, salted or smoked fillets),
           so NOAA's import totals run about 1% higher than this page's.</li>
@@ -306,10 +307,10 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         <li><b>Pounds</b> are product weight, as shipped, converted from Census's kilograms (1 kg = 2.20462 lb). A pound of
           fillets is a pound of fillets, not the live weight of the fish it came from.</li>
         <li><b>Dollars</b> for imports are customs value: the price paid for the fish, not counting freight and insurance to the
-          United States or duties (including antidumping and countervailing duties). For exports they are free-alongside-ship
-          value: the value at the U.S. port, including inland freight but not ocean shipping. <b>Price per pound</b> is dollars divided by pounds: an average unit
-          value, not a market price. Prices resting on under 10,000 lb are marked <span class="few">few lb</span>; price charts
-          leave out years under 1,000 lb.</li>
+          United States or duties (including antidumping and countervailing duties). For exports, dollars are the value at the
+          U.S. port (free alongside ship), including inland freight but not ocean shipping. <b>Price per pound</b> is dollars
+          divided by pounds. It is an average of what shipments were declared at, not a market price. Prices based on under
+          10,000 lb are marked <span class="few">few lb</span>; price charts leave out years under 1,000 lb.</li>
         <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the Imports and Exports tabs.
           Adjusted dollars are converted to <span id="cpi-base">the newest month's</span> dollars with the Consumer Price Index
           for All Urban Consumers (CPI-U, U.S. city average, U.S. Bureau of Labor Statistics). BLS published no CPI for October
@@ -411,7 +412,7 @@ function change(cur, prev) {
   if (!prev) return cur ? { t: "new", c: "up" } : { t: "–", c: "flat" };
   const p = (cur / prev - 1) * 100;
   if (Math.abs(p) < 0.5) return { t: "same", c: "flat" };
-  if (p >= 900) return { t: `${nf.format(Math.round(cur / prev))}×`, c: "up" };   // "159×" reads better than "+15,824%"
+  if (p >= 900) return { t: `${nf.format(Math.round(cur / prev))}x`, c: "up" };   // "159x" reads better than "+15,824%"
   return { t: `${p > 0 ? "+" : "−"}${Math.abs(p) >= 10 ? Math.round(Math.abs(p)) : Math.abs(p).toFixed(1)}%`, c: p > 0 ? "up" : "down" };
 }
 
@@ -426,7 +427,12 @@ const pass = (dir, st, r) => !(st.form !== "all" && r.f !== +st.form) && !(dir =
 // Export fresh/frozen: from 2012 only whole or dressed frozen fish counts as frozen (NOAA's product names
 // call frozen fillets fresh); before 2012 frozen fillets count as frozen. See About the data.
 const isFrozen = (r) => r.f === 2 || (r.f === 0 && D.months[r.m] < (D.meta.censusFrom || "2012-01"));
-const FROZEN_NOTE = "Frozen fillets count as fresh here. See About the data.";
+const frozenNote = () => el("p", { class: "note", style: "margin-top:6px" }, ["Frozen fillets count as fresh here. ",
+  el("a", { href: "#fresh-frozen", text: "See About the data", onclick: (e) => { e.preventDefault(); openAnchor("fresh-frozen"); } }), "."]);
+// the Product (and Species) selection, for chart labels and notes
+const selTxt = (dir, st) => [st.form !== "all" ? D.forms[st.form].toLowerCase() : null, dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean).join(", ");
+const naWhole = (dir, st) => dir === "exp" && (+st.form === 2 || +st.form === 3);   // whole fish exports aren't counted before 2012: "–", not 0
+const NA_TXT = "not counted before 2012";
 const CHINA_NOTE = " Since April 2026, China's Ictalurus shipments include fresh or chilled fillets at frozen-fillet prices, as reported by Census.";
 const EXP_FORMS = [1, 0, 3, 2];   // fresh fillets, frozen fillets, whole fresh, whole frozen
 // the unit for a chart's label (its hidden table's caption)
@@ -546,7 +552,8 @@ function lineChart(host, { labels, names, series, fmt, tipFmt, label }) {   // n
   host.replaceChildren(svg, keys, out, srTable(label, [names ? "Year" : "Month", ...series.map((s) => s.name)],
     (names || labels).map((t, i) => [t, ...series.map((s) => val(s, i))])));
 }
-function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, breakAt, breakLabel }) {
+function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, breakAt, breakLabel, naBefore }) {   // naBefore: bars before this index aren't counted
+  const na = (i) => naBefore != null && i < naBefore;
   const W = chartW(host), H = chartH(W), L = 52, Rt = 8, T = 12, B = 28;
   const totals = cats.map((_, i) => stacks.reduce((s, st) => s + (st.values[i] || 0), 0));
   const max = niceMax(Math.max(0, ...totals));
@@ -582,7 +589,7 @@ function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, bre
     cur = i;
     mark.setAttribute("x", L + i * bw + bw * 0.14 - 3); mark.setAttribute("visibility", kb ? "visible" : "hidden");
     const parts = stacks.length > 1 ? stacks.filter((s) => s.values[i]).map((s) => `${s.name} ${tf(s.values[i])}`) : [];
-    out.textContent = `${catTxt(i)}: ${tf(totals[i])}${parts.length ? "; " + parts.join(" · ") : ""}`;
+    out.textContent = na(i) ? `${catTxt(i)}: ${NA_TXT}` : `${catTxt(i)}: ${tf(totals[i])}${parts.length ? "; " + parts.join(" · ") : ""}`;
   };
   const hide = () => { mark.setAttribute("visibility", "hidden"); out.textContent = ""; };
   svg.addEventListener("pointermove", (e) => {
@@ -593,7 +600,7 @@ function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, bre
   keyNav(svg, cats.length, () => cur, show, hide);
   const multi = stacks.length > 1;
   const table = srTable(label, ["Year", ...(multi ? ["Total"] : []), ...stacks.map((s) => s.name)],
-    cats.map((_, i) => [catTxt(i), ...(multi ? [tf(totals[i])] : []), ...stacks.map((s) => tf(s.values[i] || 0))]));
+    cats.map((_, i) => [catTxt(i), ...(multi ? [na(i) ? "–" : tf(totals[i])] : []), ...stacks.map((s) => (na(i) ? "–" : tf(s.values[i] || 0)))]));
   host.replaceChildren(...[svg, keys, out, table].filter(Boolean));
 }
 const mixBar = (parts) => {
@@ -708,7 +715,8 @@ function drawOverTime(dir) {
   const sums = groups.map(() => years.map(() => ({ lb: 0, usd: 0 })));
   for (const r of rows) { const g = groups.findIndex((x) => x.keep(r)); const o = sums[g][years.indexOf(yr(r.m))]; o.lb += r.lb; o.usd += r.usd; }
   const used = groups.map((g, i) => ({ ...g, sum: sums[i] })).filter((g, i) => (i < named && st.by !== "species") || g.sum.some((o) => o.lb || o.usd));
-  const host = $(`#${dir}-ot`), label = `U.S. catfish ${w.noun} by year, ${unitTxt(m)}`;
+  const sel = selTxt(dir, st), na = naWhole(dir, st);
+  const host = $(`#${dir}-ot`), label = `U.S. catfish ${w.noun} by year${sel ? ", " + sel : ""}, ${unitTxt(m)}${na ? ", " + NA_TXT : ""}`;
   const ylabels = years.map((y, k) => `'${String(y).slice(2)}${k === part ? "*" : ""}`);
   const ynames = years.map((y, k) => `${y}${k === part ? " (part year)" : ""}`);
   if (m === "price") {
@@ -725,15 +733,15 @@ function drawOverTime(dir) {
   } else {
     const pick = (o) => (m === "usd" ? o.usd : o.lb);
     barChart(host, { cats: years, partial: part, label, fmt: m === "usd" ? (v) => `$${compact(v)}` : compact, tipFmt: m === "usd" ? usdTxt : lbTxt,
-      breakAt: dir === "exp" ? breakIdx(years) : null, breakLabel: "Whole/dressed from 2012",
+      breakAt: dir === "exp" ? breakIdx(years) : null, breakLabel: "Whole/dressed from 2012", naBefore: na ? breakIdx(years) : null,
       stacks: used.map((g) => ({ name: g.name, color: g.color, values: g.sum.map(pick) })) });
   }
   const unit = m === "lb" ? "Pounds (product weight)" : m === "usd" ? (S.money === "real" ? `Dollars, in ${mName(IDX.get(D.cpi.base))} dollars` : "Dollars, as reported") : "Average price per pound (years under 1,000 lb left out)";
-  $(`#${dir}-ot-note`).textContent = `${unit}.${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
+  $(`#${dir}-ot-note`).textContent = `${unit}.${sel ? ` ${sel[0].toUpperCase() + sel.slice(1)} only.` : ""}${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
   if (dir === "imp") {
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
     $("#imp-price-note").textContent = `Dollars per pound: customs value (before freight, insurance and duties) divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}${CHINA_NOTE}`;
-    lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: `Average import price by species, ${unitTxt("price")}`, fmt: (v) => `$${v.toFixed(2)}`, series: [
+    lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: `Average import price by species${sel ? ", " + sel : ""}, ${unitTxt("price")}`, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: "All imports", cls: "s-avg", values: pr(() => true) },
       ...D.species.slice(0, 2).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),
     ] });
@@ -814,7 +822,9 @@ function drawYears(dir, P, host) {
   const an = annual(ms), part = mo(N - 1) < 11 ? an.length - 1 : null;
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
   const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => (v > 0 ? `$${v.toFixed(2)}/lb` : "– (under 1,000 lb)");
-  barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year, ${unitTxt(m)}`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
+  const sel = selTxt(dir, st), na = naWhole(dir, st);
+  barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year${sel ? ", " + sel : ""}, ${unitTxt(m)}${na ? ", " + NA_TXT : ""}`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
+    naBefore: na ? breakIdx(an.map((a) => a.y)) : null,
     breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "Whole/dressed from 2012",
     partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => (m === "price" && a.lb < 1000 ? 0 : val(a, m) ?? 0)) }] });
 }
@@ -875,7 +885,7 @@ function drawDetail(dir, P, cur, prev, rank) {
   const ch = splitYears(dir, P) ? NC : change(val(o, st.measure), p ? val(p, st.measure) : null);
   const share = cur.tot[basis] ? (100 * o[basis]) / cur.tot[basis] : 0;
   const ms = monthly(dir, st, null, keep);
-  const fy = P.focusYear, m = st.measure;
+  const fy = P.focusYear, m = st.measure, sel = selTxt(dir, st);
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
   const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
   const mchart = el("div");
@@ -885,14 +895,15 @@ function drawDetail(dir, P, cur, prev, rank) {
   if (dir === "imp") {
     const sp = [0, 0, 0], fm = [0, 0, 0, 0, 0];
     for (const r of R.imp) if (P.cur.has(r.m) && keep(r) && pass(dir, st, r)) { sp[r.s] += r.lb; fm[r.f] += r.lb; }
-    parts.push(el("div", {}, [el("p", { class: "k", text: "By species (pounds)" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] })))]));
-    parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(D.forms.map((n, i) => ({ name: n, v: fm[i], color: COLORS[i + 3] })))]));
-  } else {
+    // a mix bar is left out when its one group is already the filter (it would just read 100%)
+    if (st.species === "all") parts.push(el("div", {}, [el("p", { class: "k", text: "By species (pounds)" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] })))]));
+    if (st.form === "all") parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(D.forms.map((n, i) => ({ name: n, v: fm[i], color: COLORS[i + 3] })))]));
+  } else if (st.form === "all") {
     let fresh = 0, frozen = 0;
     const fm = [0, 0, 0, 0];
-    for (const r of R.exp) if (P.cur.has(r.m) && keep(r) && pass(dir, st, r)) { fm[r.f] += r.lb; if (isFrozen(r)) frozen += r.lb; else fresh += r.lb; }
+    for (const r of R.exp) if (P.cur.has(r.m) && keep(r)) { fm[r.f] += r.lb; if (isFrozen(r)) frozen += r.lb; else fresh += r.lb; }
     parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]),
-      fresh || frozen ? el("p", { class: "note", style: "margin-top:6px", text: FROZEN_NOTE }) : null]));
+      fresh || frozen ? frozenNote() : null]));
     parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(EXP_FORMS.map((i) => ({ name: D.forms[i], v: fm[i], color: COLORS[i + 3] })))]));
   }
   host.replaceChildren(...[
@@ -912,7 +923,7 @@ function drawDetail(dir, P, cur, prev, rank) {
   ].filter(Boolean));
   // drawn once the boxes are on the page, so the charts know their width
   if (yearsBox) drawYears(dir, P, yearsBox);
-  lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}, ${unitTxt(m)}`, fmt, tipFmt, series: [
+  lineChart(mchart, { labels: MON, label: `${ct.name}, monthly ${w.noun}${sel ? ", " + sel : ""}, ${unitTxt(m)}`, fmt, tipFmt, series: [
     { name: String(fy), cls: "s-now", values: yearLine(ms, fy, m), dots: true },
     fy - 1 >= yr(0) ? { name: String(fy - 1), cls: "s-last", values: yearLine(ms, fy - 1, m) } : null,
     fy - 3 >= yr(0) ? { name: `3-year average (${fy - 3}–${String(fy - 1).slice(2)})`, cls: "s-avg", values: avg3Line(ms, fy, m) } : null,
@@ -959,7 +970,7 @@ function renderMonth() {
         el("li", {}, [`${ex.by.size} ${ex.by.size === 1 ? "destination" : "destinations"} in all`]),
       ]),
       el("p", { class: "k", text: "Fresh and frozen (pounds)", style: "margin-top:12px" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]),
-      el("p", { class: "note", style: "margin-top:6px", text: FROZEN_NOTE }), go("exp", "Exports by country")]),
+      frozenNote(), go("exp", "Exports by country")]),
   );
   const totLines = (dir, div, name) => {
     const ms = monthly(dir, all);
@@ -999,7 +1010,13 @@ addEventListener("resize", () => {
   lastW = innerWidth; clearTimeout(rz);
   rz = setTimeout(() => { const t = TABS.find((x) => !$(`#${x}`).hidden); if (t === "month") renderMonth(); else if (t === "imp" || t === "exp") render(t); }, 200);
 });
-addEventListener("hashchange", () => { const t = tabOf(location.hash.slice(1)); if (D && t) show(t); });
+// a link to a heading inside a tab (#fresh-frozen) opens that tab there; other anchors (#disclaimer) just scroll
+function openAnchor(id) {
+  const a = document.getElementById(id); if (!a) return false;
+  const p = a.closest(".panel"); if (p) show(p.id, true);
+  a.scrollIntoView(); return true;
+}
+addEventListener("hashchange", () => { if (!D) return; const h = location.hash.slice(1), t = tabOf(h); if (t) show(t); else openAnchor(h); });
 
 // ---- start ----
 Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(u); return r.json(); })))
@@ -1026,9 +1043,8 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     $("#foot-year").textContent = ct({ year: "numeric" });
     $("#cpi-base").textContent = `${mName(IDX.get(D.cpi.base))}`;
     renderMonth();
-    const h = location.hash.slice(1), anchor = h && !tabOf(h) ? document.getElementById(h) : null;
-    show(h, !!anchor);
-    if (anchor) anchor.scrollIntoView();
+    const h = location.hash.slice(1);
+    if (!(h && !tabOf(h) && openAnchor(h))) show(h);
   })
   .catch((e) => { $("#asof").textContent = "The trade data didn't load. Please refresh the page."; console.error(e); });
 })();

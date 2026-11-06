@@ -269,31 +269,33 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
     <div><h2>About the data</h2><p class="sub">What's counted, how it's measured, and where it comes from.</p></div>
     <div class="card">
       <h3>What's counted</h3>
-      <p>All U.S. trade in catfish, meaning every species in the order Siluriformes. By U.S. law, only North American
+      <p>All U.S. trade in catfish, of every species. By U.S. law, only North American
         catfish (channel, blue and their relatives) can be sold as "catfish" in the United States, but trade codes count
         all catfish species, including Pangasius (basa, tra, swai), so this page does too. Use the Species filter on the
         Imports tab to see <i>Ictalurus</i> alone.</p>
-      <p>From 2012 on, the trade codes (Harmonized System) that hold only catfish:</p>
-      <div class="tablewrap" style="max-height:none"><table class="codes"><thead><tr><th>Code</th><th>Product</th><th>Counted in</th></tr></thead><tbody>
+      <p>The trade codes counted from 2012 on, each holding only catfish:</p>
+      <div class="tablewrap" style="max-height:none"><table class="codes"><thead><tr><th>HS code</th><th>Product</th><th>Counted in</th></tr></thead><tbody>
         <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports and exports (exports counted as fresh, see below)</td></tr>
         <tr><td>0304.32</td><td>Fresh or chilled fillets</td><td>Imports and exports</td></tr>
         <tr><td>0303.24</td><td>Whole or dressed, frozen</td><td>Imports and exports</td></tr>
         <tr><td>0302.72</td><td>Whole or dressed, fresh or chilled</td><td>Imports and exports</td></tr>
         <tr><td>0304.51 (catfish lines only)</td><td>Other meat, fresh or chilled (<i>Ictalurus</i> and Pangasius only)</td><td>Imports</td></tr>
       </tbody></table></div>
-      <p>Mixed codes that also hold other fish (such as tilapia, carp or eels) are left out, because they can't be split.</p>
+      <p>Mixed codes that also hold other fish (such as tilapia, carp or eels) are left out, because they can't be split.
+        NOAA Fisheries counts some of those codes (mostly dried, salted or smoked fillets) in its catfish totals, so its
+        import totals run about 1% higher than this page's.</p>
       <h3>2005 to 2011</h3>
       <p>These years come from NOAA Fisheries' Foreign Trade database, which carries the Census Bureau's own trade figures
         under the catfish codes in use before 2012 (they match Census's own figures where both exist). Imports cover the same
         species and products as later years, apart from a small amount of whole fish of other catfish species. <b>Exports before 2012 count fillets
-        only</b>; whole and dressed catfish exports are counted from 2012, so export totals step up that year.</p>
+        only</b>, not whole or dressed fish, so export totals step up in 2012.</p>
       <h3>Why it starts in 2005</h3>
       <p>Catfish imports were first reported by species in July 2004. Before that, much of the basa and tra imported from
         Vietnam was recorded as "marine fish" or "freshwater fish" fillets, mixed with other fish, so earlier catfish import
         figures would undercount it. 2005 is the first full year with complete catfish detail.</p>
       <h3>Species</h3>
       <p>Import records name the species: <i>Ictalurus</i> (channel and blue catfish), <i>Pangasius</i> (basa, tra and swai), or
-        other catfish (<i>Clarias</i>, <i>Silurus</i>, and records that don't name a species). Export records don't name a
+        other catfish (other species, or none named). Export records don't name a
         species.</p>
       <h3 id="fresh-frozen">Fresh and frozen exports</h3>
       <p>Frozen fillets (0304.62) count as <b>fresh</b> exports on this page, with fresh fillets and fresh whole fish; only
@@ -305,28 +307,25 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         <li><b>Imports.</b> Pounds count fish that cleared customs for use in the United States (Census calls these imports for
           consumption). Dollars are the customs value of all arrivals (general imports). NOAA Fisheries reports catfish trade
           the same way. A few shipments show a value but no pounds; they count in dollars only.</li>
-        <li><b>Catfish-only codes.</b> Only product codes that hold catfish alone are counted. NOAA Fisheries' catfish totals
-          also take in codes catfish shares with carp, eels, tilapia and other fish (mostly dried, salted or smoked fillets),
-          so NOAA's import totals run about 1% higher than this page's.</li>
         <li><b>Exports</b> are domestic exports only: catfish of U.S. origin. Re-exports of imported catfish are left out.</li>
-        <li><b>Pounds</b> are product weight, as shipped, converted from Census's kilograms (1 kg = 2.20462 lb). A pound of
-          fillets is a pound of fillets, not the live weight of the fish it came from.</li>
+        <li><b>Pounds</b> are product weight as shipped (not live weight), converted from Census's kilograms
+          (1 kg = 2.20462 lb).</li>
         <li><b>Dollars</b> for imports are customs value: the price paid for the fish, not counting freight and insurance to the
-          United States or duties (including antidumping and countervailing duties). For exports, dollars are the value at the
+          United States or duties. For exports, dollars are the value at the
           U.S. port (free alongside ship), including inland freight but not ocean shipping. <b>Price per pound</b> is dollars
-          divided by pounds. It is an average of what shipments were declared at, not a market price. Prices based on under
+          divided by pounds. It is the average declared value, not a market price. Prices based on under
           10,000 lb are marked <span class="few">few lb</span>; price charts leave out years under 1,000 lb.</li>
         <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the Imports and Exports tabs.
           Adjusted dollars are converted to <span id="cpi-base">the newest month's</span> dollars with the Consumer Price Index
-          for All Urban Consumers (CPI-U, U.S. city average, U.S. Bureau of Labor Statistics). BLS published no CPI for October
+          (CPI-U, Bureau of Labor Statistics). BLS published no CPI for October
           2025 because of the government shutdown; that month uses the midpoint of September and November 2025.</li>
         <li>Duties are not shown. Census's duty figure leaves out antidumping and countervailing duties, so it understates
           what importers pay.</li>
       </ul>
       <h3>When it updates</h3>
-      <p>The U.S. Census Bureau releases each month's trade about five weeks after the month ends, at 8:30 a.m. Eastern on
-        dates it <a href="https://www.census.gov/foreign-trade/schedule.html">publishes about a year ahead</a>. This page
-        updates the morning of each release<span id="next-release"></span>. Each update also re-pulls the current and
+      <p>The U.S. Census Bureau releases each month's trade about five weeks after the month ends, on a
+        <a href="https://www.census.gov/foreign-trade/schedule.html">schedule it publishes about a year ahead</a>. This page
+        updates the morning of each release<span id="next-release"></span>. Each update also refreshes the current and
         previous year, so recent months pick up Census's revisions.</p>
     </div>
   </section>
@@ -395,7 +394,7 @@ const mShort = (i) => `${MON[mo(i)]} ${yr(i)}`;
 const janTo = (m) => (m ? `January–${MONTH[m]}` : "January"), janToShort = (m) => (m ? `Jan–${MON[m]}` : "Jan");
 const SMALL = 10000;
 const breakIdx = (cats) => { const i = cats.indexOf(+(D.meta.censusFrom || "2012").slice(0, 4)); return i > 0 ? i : null; };
-const FILLETS_NOTE = "Before 2012, exports count fillets only; whole and dressed fish are counted from 2012.";
+const FILLETS_NOTE = "Before 2012, exports count fillets only, not whole or dressed fish.";
 // a period from 2012 on against one before it: whole fish join the export count in 2012, so no change is shown
 const NC = { t: "n/c", c: "flat", title: "Not comparable: before 2012, exports count fillets only" };
 const splitYears = (dir, P) => { const cf = D.meta.censusFrom || "2012-01"; return dir === "exp" && !!P.prev && [...P.cur].some((i) => D.months[i] >= cf) && [...P.prev].some((i) => D.months[i] < cf); };           // prices resting on fewer pounds get a "few lb" flag
@@ -438,7 +437,8 @@ const frozenNote = () => el("p", { class: "note", style: "margin-top:6px" }, ["F
 const selTxt = (dir, st) => [st.form !== "all" ? D.forms[st.form].toLowerCase() : null, dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean).join(", ");
 const naWhole = (dir, st) => dir === "exp" && (+st.form === 2 || +st.form === 3);   // whole fish exports aren't counted before 2012: "–", not 0
 const NA_TXT = "not counted before 2012";
-const CHINA_NOTE = " Since April 2026, China's Ictalurus shipments include fresh or chilled fillets at frozen-fillet prices, as reported by Census.";
+const PRE_NA = "Whole or dressed fish exports were not counted before 2012.";
+const CHINA_NOTE = " Since April 2026, Census records fresh or chilled Ictalurus fillets from China at frozen-fillet prices.";
 const EXP_FORMS = [1, 0, 3, 2];   // fresh fillets, frozen fillets, whole fresh, whole frozen
 // the unit for a chart's label (its hidden table's caption)
 const unitTxt = (m) => (m === "lb" ? "pounds" : (m === "usd" ? "dollars" : "dollars per pound") + (S.money === "real" ? `, in ${mName(IDX.get(D.cpi.base))} dollars` : ""));
@@ -751,7 +751,7 @@ function drawOverTime(dir) {
       ...D.species.slice(0, 2).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),
     ] });
   }
-  $(`#${dir}-ot-src`).textContent = `${years[0]}–2011 come from NOAA Fisheries' trade database, which carries the Census Bureau's own figures; 2012 on comes from the Census Bureau directly.${dir === "exp" ? " " + FILLETS_NOTE : ""}${moneyNote()}`;
+  $(`#${dir}-ot-src`).textContent = `Sources: NOAA Fisheries for ${years[0]}–2011 (Census figures), the Census Bureau from 2012.${dir === "exp" ? " " + FILLETS_NOTE : ""}${moneyNote()}`;
 }
 const moneyLabel = () => `In ${mShort(IDX.get(D.cpi.base))} dollars`;
 const moneySeg = (id) => segBtns(id, [["nom", "As reported"], ["real", moneyLabel()]], S.money, setMoney);
@@ -760,7 +760,7 @@ function setMoney(v) {
   const tab = TABS.find((t) => !$(`#${t}`).hidden);
   if (tab === "imp" || tab === "exp") render(tab);
 }
-const moneyNote = () => (S.money !== "real" ? "" : ` Dollars are in ${mName(IDX.get(D.cpi.base))} terms, adjusted for inflation with the CPI-U.`
+const moneyNote = () => (S.money !== "real" ? "" : ` Dollars are adjusted for inflation to ${mName(IDX.get(D.cpi.base))} dollars (CPI-U).`
   + (D.cpi.base < D.months.at(-1) ? ` The CPI-U runs only through ${mName(IDX.get(D.cpi.base))}, so later months are left as reported.` : ""));
 function syncSeg(id, v) { for (const b of document.querySelectorAll(`#${id} button`)) b.setAttribute("aria-pressed", String(b.dataset.v === String(v))); }
 function render(dir) {
@@ -775,13 +775,16 @@ function render(dir) {
   if (st.country != null && !rank.some(([c]) => c === st.country)) st.country = null;
   const filt = [st.form !== "all" ? D.forms[st.form].toLowerCase() : null,
     dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean);
+  const cf = D.meta.censusFrom || "2012-01";
+  // a whole-fish product in a period entirely before 2012: those exports weren't counted, so "0 lb" would read as a measured zero
+  const preNA = naWhole(dir, st) && [...P.cur].every((i) => D.months[i] < cf);
   $(`#${dir}-h`).textContent = `${w.noun[0].toUpperCase() + w.noun.slice(1)} by country`;
   const zsum = rank.reduce((a, [, o]) => ({ lb: a.lb + o.lb, usd: a.usd + o.usd }), { lb: 0, usd: 0 }), T = zoned ? zsum : cur.tot;
   const usTot = zoned ? ` (U.S. total ${lbTxt(cur.tot.lb)})` : "";
-  $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ` + (zoned && !rank.length
+  $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ` + (preNA ? `${NA_TXT}.` : zoned && !rank.length
     ? `no ${w.noun} ${w.toFrom} ${zone}${usTot}.`
     : `${zoned ? `${zone}, ` : ""}${lbTxt(T.lb)}, ${usdTxt(T.usd)}, ${priceTxt(T)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}${usTot}.`) + moneyNote();
-  $(`#${dir}-legend`).textContent = !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
+  $(`#${dir}-legend`).textContent = preNA ? PRE_NA : !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
     : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details, or a total row in the list for the whole ${zoned ? "region" : "selection"}.`;
   // ranked list
   const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
@@ -812,12 +815,13 @@ function render(dir) {
   const tfoot = el("tfoot", {}, [zoneRow, el("tr", totalProps(!zoned), [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${tch.c}`, text: tch.t, title: tch.title })])]);
   $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
   $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zone}` : ""}, ${P.label}`;
-  const cf = D.meta.censusFrom || "2012-01";
   const early = dir === "exp" && ([...P.cur, ...(P.prev || [])].some((i) => D.months[i] < cf) || P.focusYear - 3 < +cf.slice(0, 4));
-  $(`#${dir}-list-note`).textContent = (early ? FILLETS_NOTE + " " : "") + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev ? (nc ? ` No change is shown (n/c): ${P.prevLabel} counts fillets only.` : ` Change compares with ${P.prevLabel}.`) : ""}` : `No U.S. ${w.noun} ${w.toFrom} ${zoned ? zone : "any country"} in this selection. Choose World or another region.`);
+  // one fillets-only sentence: with n/c it also explains the missing change, instead of saying it twice
+  const lead = nc ? "Before 2012, exports count fillets only, not whole or dressed fish, so no change is shown (n/c). " : early ? FILLETS_NOTE + " " : "";
+  $(`#${dir}-list-note`).textContent = preNA ? PRE_NA : lead + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev && !nc ? ` Change compares with ${P.prevLabel}.` : ""}` : zoned ? "Choose World or another region." : `No U.S. ${w.noun} in this selection.`);
   drawMap(dir, cur);
   drawOverTime(dir);
-  drawDetail(dir, P, cur, prev, rank);
+  drawDetail(dir, P, cur, prev, rank, preNA);
 }
 // annual bars for the country or region total the details show (drawn even when the period has no trade)
 function drawYears(dir, P, host) {
@@ -879,9 +883,9 @@ const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", 
 const inZone = (c, zone) => zone === "World" || ZONES[zone].includes(D.countries[c].region);
 function zoomTo(dir, v) { S[dir].zoom = v; S[dir].country = null; hideTip(); render(dir); }
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
-function drawDetail(dir, P, cur, prev, rank) {
+function drawDetail(dir, P, cur, prev, rank, preNA) {
   const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir], zone = st.zoom, zoned = zone !== "World";
-  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}. Choose World or another region to see a country.` : `No ${w.noun} in this selection.` })); return; }
+  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: preNA ? PRE_NA : zoned ? `No ${w.noun} ${w.toFrom} ${zone} in this period. Choose World or another region.` : `No ${w.noun} in this selection.` })); return; }
   const whole = c == null, keep = whole ? (r) => inZone(r.c, zone) : (r) => r.c === c;
   const sum = (t) => { const o = { lb: 0, usd: 0 }; for (const [k, v] of t.by) if (whole ? inZone(k, zone) : k === c) { o.lb += v.lb; o.usd += v.usd; } return o; };
   const o = sum(cur), p = P.prev ? sum(prev) : null;
@@ -1044,7 +1048,7 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     // built on a Mac in Mississippi, so the time reads in Central time
     const ct = (o) => builtAt.toLocaleString("en-US", { timeZone: "America/Chicago", ...o });
     const hm = ct({ hour: "numeric", minute: "2-digit" }).replace(/\s?([AP])M$/, (_, x) => ` ${x.toLowerCase()}.m.`);
-    $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${ct({ month: "long", day: "numeric", year: "numeric" })}, ${hm} CT. Updates monthly, when Census releases new trade data.`;
+    $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${ct({ month: "long", day: "numeric", year: "numeric" })}, ${hm} CT.`;
     $("#foot-year").textContent = ct({ year: "numeric" });
     $("#cpi-base").textContent = `${mName(IDX.get(D.cpi.base))}`;
     renderMonth();

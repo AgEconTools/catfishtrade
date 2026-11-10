@@ -20,6 +20,8 @@
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Visit counts: GoatCounter, no cookies and no personal data (Josh, 11/2026). It skips localhost. -->
+<script data-goatcounter="https://agecontools.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <style>
 @font-face { font-family: "Bitter"; font-weight: 600; font-style: normal; font-display: swap; src: url(fonts/bitter-latin-600-normal.woff2) format("woff2"); }
 @font-face { font-family: "Bitter"; font-weight: 700; font-style: normal; font-display: swap; src: url(fonts/bitter-latin-700-normal.woff2) format("woff2"); }
@@ -89,6 +91,21 @@ footer .legal { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; 
 }
 :root[data-theme="dark"] .legal .logo-light { display: none; }
 :root[data-theme="dark"] .legal .logo-dark { display: block; }
+/* "Share this view" in the masthead (11/2026; ADDRESS_STANDARD.md). This page is never linked to the
+   cattle tools: different audiences (Josh, 11/10/2026). */
+.asof.tools-line { margin-top: 6px; font-size: 13px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+.share-btn { all: unset; cursor: pointer; text-decoration: underline; color: inherit; font: inherit; }
+.share-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 2px; }
+.tools-strip { margin: 0 0 24px; scroll-margin-top: 80px; }   /* clears the sticky tab bar */
+.tools-strip h2 { margin: 0 0 10px; }
+.tools-strip ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.tools-strip a { display: flex; gap: 12px; align-items: flex-start; height: 100%; box-sizing: border-box; padding: 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); color: var(--ink); text-decoration: none; }
+.tools-strip a:hover { border-color: var(--accent); }
+.tools-strip a:hover b { text-decoration: underline; }
+.tools-strip svg { width: 36px; height: 36px; flex: none; border-radius: 7px; }
+.tools-strip b { display: block; font-size: 15px; line-height: 1.3; }
+.tools-strip a > span > span { display: block; font-size: 13px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+@media print { .tools-line, .tools-strip { display: none; } }
 .asof { margin: 6px 0 0; font-size: 14px; opacity: .9; }
 .asof.edu { margin-top: 2px; font-size: 13px; }
 .asof a { color: inherit; }
@@ -253,6 +270,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
     <h1>U.S. Catfish Trade</h1>
     <p class="asof" id="asof">Loading the latest trade data…</p>
     <p class="asof edu">For educational use only. <a href="#disclaimer">Read the disclaimer</a>.</p>
+      <p class="asof tools-line"><button type="button" class="share-btn" id="share-view">Share this view</button><span class="sr-only" role="status" id="share-msg"></span></p>
   </div>
 </header>
 <div class="wrap stale-row" id="stale-row" hidden><p class="warn" role="status" id="stale"></p></div>
@@ -377,6 +395,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         the extent protected by applicable law. Questions about equal opportunity programs or compliance should be directed
         to the <a href="https://www.civilrights.msstate.edu/">Office of Civil Rights Compliance</a>, 231 Famous Maroon Band
         Street, P.O. Box 6044, Mississippi State, MS 39762.</p>
+      <p class="note">Visits to this page are counted with GoatCounter, without cookies or any personal data.</p>
       <p class="note">Copyright <span id="foot-year"></span> by Mississippi State University. All rights reserved.
         <a href="https://www.msstate.edu">www.msstate.edu</a></p>
     </div>
@@ -902,7 +921,7 @@ const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", 
   "Middle East and Africa": ["Middle East and North Africa", "Sub-Saharan Africa"], Asia: ["Asia"], Oceania: ["Oceania"] };   // one per map view in the export
 const inZone = (c, zone) => zone === "World" || ZONES[zone].includes(D.countries[c].region);
 function zoomTo(dir, v) { S[dir].zoom = v; S[dir].country = null; hideTip(); render(dir); }
-function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
+function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); writeAddr(openTab()); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
 function drawDetail(dir, P, cur, prev, rank, preNA) {
   const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir], zone = st.zoom, zoned = zone !== "World";
   if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: preNA ? PRE_NA : zoned ? `No ${w.noun} ${w.toFrom} ${zone} in this period. Choose World or another region.` : `No ${w.noun} in this selection.` })); return; }
@@ -1018,12 +1037,23 @@ function renderMonth() {
 const TABS = ["month", "imp", "exp", "about"];
 const ALIAS = { trend: "imp", imports: "imp", exports: "exp" };   // trends merged into Imports and Exports (2026-11-03); full names for links
 const tabOf = (h) => ALIAS[h] || (TABS.includes(h) ? h : null);
+// The address (Data_Forecasts/ADDRESS_STANDARD.md): ?country=br#imports. It follows the visitor so a copied or
+// shared link opens the same view; never rename a name (old ones keep opening their tab).
+const ADDR = { imp: "imports", exp: "exports" };
+function writeAddr(tab) {
+  let q; try { q = new URLSearchParams(location.search); } catch (e) { return; }
+  const c = (tab === "imp" || tab === "exp") && D ? S[tab].country : null;
+  if (c != null && D.countries[c]) q.set("country", D.countries[c].iso); else q.delete("country");
+  const qs = q.toString(), url = `${location.pathname}${qs ? "?" + qs : ""}#${ADDR[tab] || tab}`;
+  try { if (location.pathname + location.search + location.hash !== url) history.replaceState(null, "", url); } catch (e) { /* sandboxed */ }
+}
+const openTab = () => TABS.find((x) => !$(`#${x}`).hidden) || "month";
 function show(tab, keepHash = false) {
   tab = tabOf(tab) || "month";
   for (const t of TABS) { $(`#${t}`).hidden = t !== tab; $(`#t-${t}`).setAttribute("aria-selected", String(t === tab)); $(`#t-${t}`).tabIndex = t === tab ? 0 : -1; }
   if (tab === "imp" || tab === "exp") render(tab);
   else if (tab === "month") renderMonth();
-  if (!keepHash && location.hash.slice(1) !== tab) history.replaceState(null, "", `#${tab}`);
+  if (!keepHash) writeAddr(tab);
   hideTip();
 }
 for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => { show(b.dataset.tab); window.scrollTo({ top: 0 }); });
@@ -1071,11 +1101,46 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     $("#foot-gen").textContent = `Data through ${mName(L)}. Page version ${D.meta.version}, built ${ct({ month: "long", day: "numeric", year: "numeric" })}, ${hm} CT.`;
     $("#foot-year").textContent = ct({ year: "numeric" });
     $("#cpi-base").textContent = `${mName(IDX.get(D.cpi.base))}`;
+    // ?country=br in a link opens that country on Imports and Exports (ignored if it isn't in the data)
+    let cq = ""; try { cq = (new URLSearchParams(location.search).get("country") || "").trim().toLowerCase(); } catch (e) { /* no query */ }
+    const ci = cq ? D.countries.findIndex((x) => x.iso === cq) : -1;
+    if (ci >= 0) S.imp.country = S.exp.country = ci;
     renderMonth();
-    const h = location.hash.slice(1);
-    if (!(h && !tabOf(h) && openAnchor(h))) show(h);
+    const h = location.hash.slice(1), at = h && !tabOf(h) && document.getElementById(h);
+    if (at && !at.closest(".panel")) show("month", true);   // #disclaimer and other anchors outside the tabs: the first tab is open
+    if (!(at && openAnchor(h))) show(h);
   })
   .catch((e) => { $("#asof").textContent = "The trade data didn't load. Please refresh the page."; console.error(e); });
+})();
+
+// "Share this view" (11/2026; ADDRESS_STANDARD.md) opens the phone's share sheet where there is one,
+// otherwise copies the address, which always holds the view on screen.
+(() => {
+  const btn = document.getElementById("share-view"), msg = document.getElementById("share-msg");
+  if (btn) {
+    const say = t => { msg.textContent = t; btn.textContent = t; clearTimeout(btn._t);
+      btn._t = setTimeout(() => { btn.textContent = "Share this view"; msg.textContent = ""; }, 2500); };
+    btn.addEventListener("click", async () => {
+      const url = location.href;
+      if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+        try { await navigator.share({ title: document.title, url }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+      }
+      try { await navigator.clipboard.writeText(url); say("Link copied"); }
+      catch (e) { window.prompt("Copy this link:", url); }
+    });
+  }
+})();
+
+// Visit counts (GoatCounter): which tabs people open and how often they share, as plain events with no
+// identity attached. Named "<tool>: <tab label>"; nothing is sent when the counter didn't load.
+(() => {
+  const tool = location.pathname.split("/").filter(Boolean).pop() || "page";
+  const count = path => { try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path, title: path, event: true }); } catch (e) { /* counting never breaks the page */ } };
+  document.addEventListener("click", e => {
+    const t = e.target.closest('[role="tab"]');
+    if (t) count(`${tool}: ${(t.querySelector(".l") || t).textContent.trim()}`);   // the long label where a tab has two
+    if (e.target.closest("#share-view")) count(`${tool}: share`);
+  });
 })();
 </script>
 </body>

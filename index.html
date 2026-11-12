@@ -165,6 +165,8 @@ h3 { font: 700 18px/1.3 var(--body); margin: 0; }
 @media (max-width: 640px) { .seg button { padding: 6px 9px; font-size: 13px; } }
 @media (max-width: 420px) { .seg button { padding: 6px 7px; font-size: 12.5px; } }
 @media (max-width: 340px) { .seg button { padding: 6px 5px; font-size: 12px; } }
+/* phone tap targets: 44px tall (WCAG 2.5.5); the seven region pills, tabs and menus included */
+@media (max-width: 640px) { .seg button, .field select, .tab, .btn { min-height: 44px; } }
 .seg.chips { flex-wrap: wrap; border: 0; border-radius: 0; gap: 6px; overflow: visible; }   /* seven regions: separate pills that wrap */
 .seg.chips button { border: 1px solid var(--rule); border-radius: 999px; }
 .btn { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
@@ -277,7 +279,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
 
 <nav class="tabs" aria-label="Dashboard sections">
   <div class="wrap" role="tablist">
-    <button class="tab" role="tab" id="t-month" aria-controls="month" data-tab="month"><span class="l">This month</span><span class="s">This month</span></button>
+    <button class="tab" role="tab" id="t-month" aria-controls="month" data-tab="month"><span class="l">Latest month</span><span class="s">Latest month</span></button>
     <button class="tab" role="tab" id="t-imp" aria-controls="imp" data-tab="imp"><span class="l">Imports</span><span class="s">Imports</span></button>
     <button class="tab" role="tab" id="t-exp" aria-controls="exp" data-tab="exp"><span class="l">Exports</span><span class="s">Exports</span></button>
     <button class="tab" role="tab" id="t-about" aria-controls="about" data-tab="about"><span class="l">About the data</span><span class="s">About</span></button>
@@ -286,9 +288,9 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
 
 <main class="wrap" id="main" tabindex="-1">
   <noscript><p class="warn">This page needs JavaScript to show the trade data.</p></noscript>
-  <!-- This month -->
+  <!-- Latest month -->
   <section class="panel" id="month" role="tabpanel" aria-labelledby="t-month">
-    <div><h2 id="month-h">This month</h2><p class="sub" id="month-sub"></p></div>
+    <div><h2 id="month-h">Latest month</h2><p class="sub" id="month-sub"></p></div>
     <div class="cards" id="month-cards"></div>
     <p class="note">Pounds are product weight, as shipped: a pound of fillets is a pound of fillets, not the live weight
       of the fish they came from.</p>
@@ -321,12 +323,13 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       </tbody></table></div>
       <p>Mixed codes that also hold other fish (such as tilapia, carp or eels) are left out, because they can't be split.
         NOAA Fisheries counts some of those codes (mostly dried, salted or smoked fillets) in its catfish totals, so its
-        import totals run about 1% higher than this page's.</p>
+        import totals run about 1.5% higher than this page's in pounds and 2% higher in dollars.</p>
       <h3>2005 to 2011</h3>
       <p>These years come from NOAA Fisheries' Foreign Trade database, which carries the Census Bureau's own trade figures
         under the catfish codes in use before 2012 (they match Census's own figures where both exist). Imports cover the same
         species and products as later years, apart from a small amount of whole fish of other catfish species. <b>Exports before 2012 count fillets
-        only</b>, not whole or dressed fish, so export totals step up in 2012.</p>
+        only</b>, not whole or dressed fish, and aren't comparable with later years. The step up in 2012 isn't only whole
+        fish: frozen fillet exports also jump under the new codes.</p>
       <h3>Why it starts in 2005</h3>
       <p>Catfish imports were first reported by species in July 2004. Before that, much of the basa and tra imported from
         Vietnam was recorded as "marine fish" or "freshwater fish" fillets, mixed with other fish, so earlier catfish import
@@ -334,7 +337,9 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
       <h3>Species</h3>
       <p>Import records name the species: <i>Ictalurus</i> (channel and blue catfish), <i>Pangasius</i> (basa, tra and swai), or
         other catfish (other species, or none named). Export records don't name a
-        species.</p>
+        species. In 2018 to 2020, a large share of Vietnam's frozen fillets (about a third in 2019) was entered under the
+        code for other catfish fillets (0304.62.0030) instead of the Pangasius code, so other catfish rises and Pangasius
+        falls in those years. Vietnam's catfish is almost all Pangasius, so this most likely reflects how shipments were declared, not a change in species.</p>
       <h3 id="fresh-frozen">Fresh and frozen exports</h3>
       <p>Frozen fillets (0304.62) count as <b>fresh</b> exports on this page, with fresh fillets and fresh whole fish; only
         frozen whole or dressed fish (0303.24) counts as frozen. That follows NOAA Fisheries' product names, so these
@@ -352,7 +357,8 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
           United States or duties. For exports, dollars are the value at the
           U.S. port (free alongside ship), including inland freight but not ocean shipping. <b>Price per pound</b> is dollars
           divided by pounds. It is the average declared value, not a market price. Prices based on under
-          10,000 lb are marked <span class="few">few lb</span>; price charts leave out years under 1,000 lb.</li>
+          10,000 lb are marked <span class="few">few lb</span>, and a country's change isn't shown when either period is
+          under 10,000 lb. Price charts leave out years under 1,000 lb.</li>
         <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the Imports and Exports tabs.
           Adjusted dollars are converted to <span id="cpi-base">the newest month's</span> dollars with the Consumer Price Index
           (CPI-U, Bureau of Labor Statistics). BLS published no CPI for October
@@ -433,9 +439,15 @@ const mShort = (i) => `${MON[mo(i)]} ${yr(i)}`;
 const janTo = (m) => (m ? `January–${MONTH[m]}` : "January"), janToShort = (m) => (m ? `Jan–${MON[m]}` : "Jan");
 const SMALL = 10000;
 const breakIdx = (cats) => { const i = cats.indexOf(+(D.meta.censusFrom || "2012").slice(0, 4)); return i > 0 ? i : null; };
-const FILLETS_NOTE = "Before 2012, exports count fillets only, not whole or dressed fish.";
-// a period from 2012 on against one before it: whole fish join the export count in 2012, so no change is shown
+const FILLETS_NOTE = "Export totals before 2012 count fillets only and aren't comparable with later years.";
+const BREAK_LABEL = "Fillets only before 2012";   // the dashed line on export charts (the 2012 step isn't only whole fish: frozen fillet exports jump too)
+// a period from 2012 on against one before it: export codes change in 2012, so no change is shown
 const NC = { t: "n/c", c: "flat", title: "Not comparable: before 2012, exports count fillets only" };
+// a country's change when either period is under SMALL pounds would be noise ("23x", "+436%"): a dash instead.
+// A new partner (none before, SMALL or more now) still reads "new". Total rows don't use this.
+const FEW = { t: "–", c: "flat", title: "Not shown: under 10,000 lb in one of the two periods" };
+const guardSmall = (ch, o, p) => { if (ch === NC || ch.t === "–") return ch; const pl = p ? p.lb : 0;
+  return o.lb >= SMALL && (pl >= SMALL || pl === 0) ? ch : FEW; };
 const splitYears = (dir, P) => { const cf = D.meta.censusFrom || "2012-01"; return dir === "exp" && !!P.prev && [...P.cur].some((i) => D.months[i] >= cf) && [...P.prev].some((i) => D.months[i] < cf); };           // prices resting on fewer pounds get a "few lb" flag
 const COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c6)", "var(--c7)", "var(--c8)", "var(--c9)", "var(--c5)"];
 
@@ -476,8 +488,11 @@ const frozenNote = () => el("p", { class: "note", style: "margin-top:6px" }, ["F
 const selTxt = (dir, st) => [st.form !== "all" ? D.forms[st.form].toLowerCase() : null, dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean).join(", ");
 const naWhole = (dir, st) => dir === "exp" && (+st.form === 2 || +st.form === 3);   // whole fish exports aren't counted before 2012: "–", not 0
 const NA_TXT = "not counted before 2012";
-const PRE_NA = "Whole or dressed fish exports were not counted before 2012.";
-const CHINA_NOTE = " Since April 2026, Census records fresh or chilled Ictalurus fillets from China at frozen-fillet prices.";
+// Ictalurus from China: declared near $0.85/lb every month since June 2025, against $1.40-1.50 in 2024 and $1.51 or more
+// every year before (checked 2026-11-12). Shown when the species filter can include Ictalurus.
+const CHINA_NOTE = "; Ictalurus from China has been declared well below earlier years since mid-2025";
+// the one line of the "Total" view, named for the Product and Species selection when there is one
+const totName = (dir, st) => { const s = selTxt(dir, st); return s ? s[0].toUpperCase() + s.slice(1) : `All ${WORD[dir].noun}`; };
 const EXP_FORMS = [1, 0, 3, 2];   // fresh fillets, frozen fillets, whole fresh, whole frozen
 // the unit for a chart's label (its hidden table's caption)
 const unitTxt = (m) => (m === "lb" ? "pounds" : (m === "usd" ? "dollars" : "dollars per pound") + (S.money === "real" ? `, in ${mName(IDX.get(D.cpi.base))} dollars` : ""));
@@ -749,11 +764,12 @@ function drawOverTime(dir) {
     how = ` The ${top.length} largest ${w.plural} since ${years[0]}, the rest together.`;
   } else if (st.by === "species") {
     groups = D.species.map((n, i) => ({ name: n, color: COLORS[i], keep: (r) => r.s === i }));
+    how = " In 2018 to 2020, many of Vietnam's frozen fillet shipments were entered as other catfish instead of Pangasius.";
   } else if (st.by === "region") {
     const top = biggest((r) => D.countries[r.c].region, 5);
     groups = top.map((g, i) => ({ name: g, color: COLORS[i], keep: (r) => D.countries[r.c].region === g }));
     how = ` The ${top.length} largest destination regions since ${years[0]}, the rest together.`;
-  } else groups = [{ name: `All ${w.noun}`, color: "var(--c1)", keep: () => true }];
+  } else groups = [{ name: totName(dir, st), color: "var(--c1)", keep: () => true }];
   const named = groups.length;
   groups.push({ name: st.by === "region" ? "All other regions" : "All others", color: "var(--c5)", keep: () => true });
   const sums = groups.map(() => years.map(() => ({ lb: 0, usd: 0 })));
@@ -769,28 +785,28 @@ function drawOverTime(dir) {
     // price lines tangle past three: the total and the two largest groups by pounds (Josh, 2026-11-03)
     const lbOf = (g) => g.sum.reduce((a, o) => a + o.lb, 0);
     const lines = st.by === "total" ? [] : used.filter((g, i) => i < named && lbOf(g) > 0).sort((a, b) => lbOf(b) - lbOf(a)).slice(0, 2);
-    if (lines.length) how = ` All ${w.noun} and the 2 largest ${st.by === "species" ? "species" : st.by === "region" ? "destination regions" : w.plural} since ${years[0]} by pounds.`;
+    if (lines.length) how = ` The total and the 2 largest ${st.by === "species" ? "species" : st.by === "region" ? "destination regions" : w.plural} since ${years[0]} by pounds.`;
     lineChart(host, { labels: ylabels, names: ynames, label, fmt: (v) => `$${v.toFixed(2)}`, series: [
-      { name: `All ${w.noun}`, cls: "s-avg", values: all.map(pr) },
+      { name: totName(dir, st), cls: "s-avg", values: all.map(pr) },
       ...lines.map((g) => ({ name: g.name, cls: "s-now", color: g.color, values: g.sum.map(pr) })),
     ] });
   } else {
     const pick = (o) => (m === "usd" ? o.usd : o.lb);
     barChart(host, { cats: years, partial: part, label, fmt: m === "usd" ? (v) => `$${compact(v)}` : compact, tipFmt: m === "usd" ? usdTxt : lbTxt,
-      breakAt: dir === "exp" ? breakIdx(years) : null, breakLabel: "Whole/dressed from 2012", naBefore: na ? breakIdx(years) : null,
+      breakAt: dir === "exp" ? breakIdx(years) : null, breakLabel: BREAK_LABEL, naBefore: na ? breakIdx(years) : null,
       stacks: used.map((g) => ({ name: g.name, color: g.color, values: g.sum.map(pick) })) });
   }
   const unit = m === "lb" ? "Pounds (product weight)" : m === "usd" ? (S.money === "real" ? `Dollars, in ${mName(IDX.get(D.cpi.base))} dollars` : "Dollars, as reported") : "Average price per pound (years under 1,000 lb left out)";
   $(`#${dir}-ot-note`).textContent = `${unit}.${sel ? ` ${sel[0].toUpperCase() + sel.slice(1)} only.` : ""}${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
   if (dir === "imp") {
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
-    $("#imp-price-note").textContent = `Dollars per pound: customs value (before freight, insurance and duties) divided by pounds${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}${CHINA_NOTE}`;
+    $("#imp-price-note").textContent = `Declared customs value per pound${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}${st.species === "all" || +st.species === 0 ? CHINA_NOTE : ""}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
     lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: `Average import price by species${sel ? ", " + sel : ""}, ${unitTxt("price")}`, fmt: (v) => `$${v.toFixed(2)}`, series: [
-      { name: "All imports", cls: "s-avg", values: pr(() => true) },
-      ...D.species.slice(0, 2).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),
+      { name: totName("imp", st), cls: "s-avg", values: pr(() => true) },
+      ...(st.species === "all" ? D.species.slice(0, 2) : []).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),   // one species picked: its line is the total
     ] });
   }
-  $(`#${dir}-ot-src`).textContent = `Sources: NOAA Fisheries for ${years[0]}–2011 (Census figures), the Census Bureau from 2012.${dir === "exp" ? " " + FILLETS_NOTE : ""}${moneyNote()}`;
+  $(`#${dir}-ot-src`).textContent = `Sources: NOAA Fisheries for ${years[0]}–2011 (Census figures), the Census Bureau from 2012.${moneyNote()}`;
 }
 const moneyLabel = () => `In ${mShort(IDX.get(D.cpi.base))} dollars`;
 const moneySeg = (id) => segBtns(id, [["nom", "As reported"], ["real", moneyLabel()]], S.money, setMoney);
@@ -823,7 +839,7 @@ function render(dir) {
   $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ` + (preNA ? `${NA_TXT}.` : zoned && !rank.length
     ? `no ${w.noun} ${w.toFrom} ${zone}${usTot}.`
     : `${zoned ? `${zone}, ` : ""}${lbTxt(T.lb)}, ${usdTxt(T.usd)}, ${priceTxt(T)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}${usTot}.`) + moneyNote();
-  $(`#${dir}-legend`).textContent = preNA ? PRE_NA : !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
+  $(`#${dir}-legend`).textContent = preNA ? "" : !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
     : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details, or a total row in the list for the whole ${zoned ? "region" : "selection"}.`;
   // ranked list
   const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
@@ -831,7 +847,7 @@ function render(dir) {
   const top = rank.length ? (rank[0][1][sbasis] || 1) : 1;
   const nc = splitYears(dir, P);
   const tbody = el("tbody", {}, rank.map(([c, o]) => {
-    const p = prev.by.get(c), ch = nc ? NC : change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null));
+    const p = prev.by.get(c), ch = nc ? NC : guardSmall(change(val(o, st.measure), p ? val(p, st.measure) : (P.prev ? 0 : null)), o, p);
     const share = cur.tot[sbasis] ? (100 * o[sbasis]) / cur.tot[sbasis] : 0;
     const tr = el("tr", { tabindex: "0", "aria-current": c === st.country ? "true" : null, onclick: () => pick(dir, c), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, c); } } }, [
       el("td", { text: D.countries[c].name }),
@@ -856,8 +872,8 @@ function render(dir) {
   $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zone}` : ""}, ${P.label}`;
   const early = dir === "exp" && ([...P.cur, ...(P.prev || [])].some((i) => D.months[i] < cf) || P.focusYear - 3 < +cf.slice(0, 4));
   // one fillets-only sentence: with n/c it also explains the missing change, instead of saying it twice
-  const lead = nc ? "Before 2012, exports count fillets only, not whole or dressed fish, so no change is shown (n/c). " : early ? FILLETS_NOTE + " " : "";
-  $(`#${dir}-list-note`).textContent = preNA ? PRE_NA : lead + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev && !nc ? ` Change compares with ${P.prevLabel}.` : ""}` : zoned ? "Choose World or another region." : `No U.S. ${w.noun} in this selection.`);
+  const lead = nc ? "Export totals before 2012 count fillets only, so no change is shown (n/c). " : early ? FILLETS_NOTE + " " : "";
+  $(`#${dir}-list-note`).textContent = preNA ? "" : lead + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev && !nc ? ` Change compares with ${P.prevLabel}.` : ""}` : zoned ? "Choose World or another region." : `No U.S. ${w.noun} in this selection.`);
   drawMap(dir, cur);
   drawOverTime(dir);
   drawDetail(dir, P, cur, prev, rank, preNA);
@@ -873,7 +889,7 @@ function drawYears(dir, P, host) {
   const sel = selTxt(dir, st), na = naWhole(dir, st);
   barChart(host, { cats: an.map((a) => a.y), label: `${who}, ${w.noun} by year${sel ? ", " + sel : ""}, ${unitTxt(m)}${na ? ", " + NA_TXT : ""}`, fmt, tipFmt, hilite: an.findIndex((a) => a.y === P.focusYear),
     naBefore: na ? breakIdx(an.map((a) => a.y)) : null,
-    breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: "Whole/dressed from 2012",
+    breakAt: dir === "exp" ? breakIdx(an.map((a) => a.y)) : null, breakLabel: BREAK_LABEL,
     partial: part, stacks: [{ name: w.noun, color: "var(--c1)", values: an.map((a) => (m === "price" && a.lb < 1000 ? 0 : val(a, m) ?? 0)) }] });
 }
 const mapState = { imp: null, exp: null };
@@ -924,13 +940,14 @@ function zoomTo(dir, v) { S[dir].zoom = v; S[dir].country = null; hideTip(); ren
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); writeAddr(openTab()); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
 function drawDetail(dir, P, cur, prev, rank, preNA) {
   const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir], zone = st.zoom, zoned = zone !== "World";
-  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: preNA ? PRE_NA : zoned ? `No ${w.noun} ${w.toFrom} ${zone} in this period. Choose World or another region.` : `No ${w.noun} in this selection.` })); return; }
+  host.hidden = preNA;   // "not counted before 2012" is said once, in the subtitle
+  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: zoned ? `No ${w.noun} ${w.toFrom} ${zone} in this period. Choose World or another region.` : `No ${w.noun} in this selection.` })); return; }
   const whole = c == null, keep = whole ? (r) => inZone(r.c, zone) : (r) => r.c === c;
   const sum = (t) => { const o = { lb: 0, usd: 0 }; for (const [k, v] of t.by) if (whole ? inZone(k, zone) : k === c) { o.lb += v.lb; o.usd += v.usd; } return o; };
   const o = sum(cur), p = P.prev ? sum(prev) : null;
   const ct = whole ? { name: zoned ? `All of ${zone}` : "All countries", region: zoned ? "Region total" : "U.S. total" } : D.countries[c];
   const basis = st.measure === "usd" ? "usd" : "lb";
-  const ch = splitYears(dir, P) ? NC : change(val(o, st.measure), p ? val(p, st.measure) : null);
+  const ch0 = splitYears(dir, P) ? NC : change(val(o, st.measure), p ? val(p, st.measure) : null), ch = whole ? ch0 : guardSmall(ch0, o, p);
   const share = cur.tot[basis] ? (100 * o[basis]) / cur.tot[basis] : 0;
   const ms = monthly(dir, st, null, keep);
   const fy = P.focusYear, m = st.measure, sel = selTxt(dir, st);
@@ -963,7 +980,7 @@ function drawDetail(dir, P, cur, prev, rank, preNA) {
       el("div", {}, [el("b", {}, [priceTxt(o), o.lb > 0 && o.lb < SMALL ? el("span", { class: "few", text: "few lb" }) : null]), el("span", { text: "average price" })]),
       whole && !zoned ? el("div", {}, [el("b", { text: String(rank.length) }), el("span", { text: rank.length === 1 ? WORD[dir].from : WORD[dir].plural })])
         : el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}${st.form !== "all" || (dir === "imp" && st.species !== "all") ? " in this selection" : ""}` })]),
-      el("div", {}, [el("b", { class: ch.c, text: ch.t, title: ch.title }), el("span", { text: !P.prev ? "no earlier year" : ch === NC ? `not comparable with ${P.prevLabel} (fillets only)` : `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` })]),
+      el("div", {}, [el("b", { class: ch.c, text: ch.t, title: ch.title }), el("span", { text: !P.prev ? "no earlier year" : ch === NC ? `not comparable with ${P.prevLabel}` : ch === FEW ? `too few pounds to compare with ${P.prevLabel}` : `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` })]),
     ]),
     yearsBox ? el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${mo(N - 1) < 11 ? ` (* ${yr(N - 1)} is ${janTo(mo(N - 1))})` : ""}` }), yearsBox]) : null,
     ...parts,
@@ -978,7 +995,7 @@ function drawDetail(dir, P, cur, prev, rank, preNA) {
   ].filter(Boolean) });
 }
 
-// ---- This month ----
+// ---- Latest month ----
 function renderMonth() {
   const L = N - 1, ly = yr(L), lm = mo(L), all = { form: "all", species: "all" };
   const one = (dir, set) => tally(dir, all, set);
@@ -987,7 +1004,7 @@ function renderMonth() {
   const iy = one("imp", ytd), iyP = one("imp", ytdP);
   const ex = one("exp", new Set([L])), exP = one("exp", new Set([L - 12])), ey = one("exp", ytd), eyP = one("exp", ytdP);
   $("#month-h").textContent = mName(L);
-  $("#month-sub").textContent = `The newest month the U.S. Census Bureau has released. Changes compare with ${mName(L - 12)}; year to date is ${janTo(lm)}. Census revises recent months in later releases.`;
+  $("#month-sub").textContent = `Changes compare with the same months of ${ly - 1}, and Census revises recent months in later releases.`;
   const chg = (a, b) => { const c = change(a, b); return el("span", { class: c.c, text: c.t }); };
   const topList = (t, n) => [...t.by].sort((a, b) => b[1].lb - a[1].lb).slice(0, n);
   const sp = [0, 0, 0]; for (const r of R.imp) if (r.m === L) sp[r.s] += r.lb;

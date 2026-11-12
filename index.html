@@ -128,6 +128,7 @@ footer .legal { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; 
 main { padding-block: 26px 40px; }
 .panel { display: grid; gap: 22px; }
 .panel[hidden] { display: none; }
+.card[hidden] { display: none; }   /* beats .detail { display: grid } */
 .panel > * { min-width: 0; }
 h2 { font: 700 clamp(22px, 3.4vw, 28px)/1.2 var(--display); margin: 0; text-wrap: balance; }
 h3 { font: 700 18px/1.3 var(--body); margin: 0; }
@@ -743,7 +744,7 @@ function buildTrade(dir) {
       el("div", { id: `${dir}-map` }),
     ]),
     el("div", { class: "split" }, [
-      el("div", { class: "card" }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` })]),
+      el("div", { class: "card", id: `${dir}-list` }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` })]),
       el("div", { class: "card detail", id: `${dir}-detail`, "aria-live": "polite" }),
     ]),
   ].filter(Boolean));
@@ -873,6 +874,7 @@ function render(dir) {
   const early = dir === "exp" && ([...P.cur, ...(P.prev || [])].some((i) => D.months[i] < cf) || P.focusYear - 3 < +cf.slice(0, 4));
   // one fillets-only sentence: with n/c it also explains the missing change, instead of saying it twice
   const lead = nc ? "Export totals before 2012 count fillets only, so no change is shown (n/c). " : early ? FILLETS_NOTE + " " : "";
+  $(`#${dir}-list`).hidden = preNA;   // no list, not a "0 lb, 100%" totals row, when nothing was counted
   $(`#${dir}-list-note`).textContent = preNA ? "" : lead + (rank.length ? `Ranked by ${sbasis === "usd" ? "dollars" : "pounds"}; share is of all U.S. catfish ${w.noun}${filt.length ? " in this selection" : ""}${zoned ? ", from every country" : ""}.${P.prev && !nc ? ` Change compares with ${P.prevLabel}.` : ""}` : zoned ? "Choose World or another region." : `No U.S. ${w.noun} in this selection.`);
   drawMap(dir, cur);
   drawOverTime(dir);

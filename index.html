@@ -359,7 +359,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
           U.S. port (free alongside ship), including inland freight but not ocean shipping. <b>Price per pound</b> is dollars
           divided by pounds. It is the average declared value, not a market price. Prices based on under
           10,000 lb are marked <span class="few">few lb</span>, and a country's change isn't shown when either period is
-          under 10,000 lb. Price charts leave out years under 1,000 lb.</li>
+          under 10,000 lb (its details give the earlier period's pounds instead). Price charts leave out years under 1,000 lb.</li>
         <li><b>Inflation.</b> Dollars are shown as reported unless you switch to adjusted dollars on the Imports and Exports tabs.
           Adjusted dollars are converted to <span id="cpi-base">the newest month's</span> dollars with the Consumer Price Index
           (CPI-U, Bureau of Labor Statistics). BLS published no CPI for October
@@ -616,8 +616,19 @@ function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, bre
   const na = (i) => naBefore != null && i < naBefore;
   const W = chartW(host), H = chartH(W), L = 52, Rt = 8, T = 12, B = 28;
   const totals = cats.map((_, i) => stacks.reduce((s, st) => s + (st.values[i] || 0), 0));
-  const max = niceMax(Math.max(0, ...totals));
+  let max = niceMax(Math.max(0, ...totals));
   const bw = (W - L - Rt) / cats.length;
+  // the break label sits at the top: right of the line if no bar there reaches it, else left of it,
+  // else the scale gets headroom so every bar stays below the label
+  const lw = breakAt > 0 && breakLabel ? breakLabel.length * 6.6 : 0, bxl = L + breakAt * bw, clearY = T + 15;
+  let lside = null;
+  if (lw) {
+    const hits = ([a0, a1], m) => totals.some((t, i) => { const x0 = L + i * bw + bw * 0.14, x1 = x0 + bw * 0.72;
+      return t > 0 && x1 > a0 && x0 < a1 && T + (1 - t / m) * (H - T - B) < clearY; });
+    const right = bxl + 4 + lw <= W - Rt ? [bxl + 4, bxl + 4 + lw] : null, left = bxl - 4 - lw >= L ? [bxl - 4 - lw, bxl - 4] : null;
+    lside = right && !hits(right, max) ? "r" : left && !hits(left, max) ? "l" : null;
+    if (!lside) { max = niceMax(Math.max(...totals) / (1 - (clearY - T) / (H - T - B))); lside = right ? "r" : "l"; }
+  }
   const every = Math.max(cats.length > 12 ? 2 : 1, Math.ceil(cats.length / Math.floor((W - L - Rt) / 30)));   // year labels, counted back from the last
   const y = (v) => T + (1 - v / max) * (H - T - B);
   const svg = sv("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": label });
@@ -636,7 +647,7 @@ function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, bre
   if (breakAt > 0) {
     const bx = L + breakAt * bw;
     svg.append(sv("line", { class: "cross", x1: bx, x2: bx, y1: T, y2: H - B }), sv("text", { class: "ax", y: T + 10, text: breakLabel || "",
-      ...(bx + 4 + (breakLabel || "").length * 6.6 > W - Rt ? { x: bx - 4, "text-anchor": "end" } : { x: bx + 4 }) }));
+      ...(lside === "l" ? { x: bx - 4, "text-anchor": "end" } : { x: bx + 4 }) }));
   }
   const out = el("p", { class: "readout", "aria-live": "polite" });
   const keys = stacks.length > 1 ? el("ul", { class: "keys" }, stacks.map((s) => el("li", {}, [el("span", { class: "sw", style: `background:${s.color}` }), s.name]))) : null;
@@ -982,7 +993,7 @@ function drawDetail(dir, P, cur, prev, rank, preNA) {
       el("div", {}, [el("b", {}, [priceTxt(o), o.lb > 0 && o.lb < SMALL ? el("span", { class: "few", text: "few lb" }) : null]), el("span", { text: "average price" })]),
       whole && !zoned ? el("div", {}, [el("b", { text: String(rank.length) }), el("span", { text: rank.length === 1 ? WORD[dir].from : WORD[dir].plural })])
         : el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}${st.form !== "all" || (dir === "imp" && st.species !== "all") ? " in this selection" : ""}` })]),
-      el("div", {}, [el("b", { class: ch.c, text: ch.t, title: ch.title }), el("span", { text: !P.prev ? "no earlier year" : ch === NC ? `not comparable with ${P.prevLabel}` : ch === FEW ? `too few pounds to compare with ${P.prevLabel}` : `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` })]),
+      el("div", {}, [el("b", { class: ch.c, text: ch.t, title: ch.title }), el("span", { text: !P.prev ? "no earlier year" : ch === NC ? `not comparable with ${P.prevLabel}` : ch === FEW ? (p && p.lb ? `${lbTxt(p.lb)} in ${P.prevLabel}` : `none in ${P.prevLabel}`) : `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` })]),
     ]),
     yearsBox ? el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${mo(N - 1) < 11 ? ` (* ${yr(N - 1)} is ${janTo(mo(N - 1))})` : ""}` }), yearsBox]) : null,
     ...parts,

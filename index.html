@@ -316,7 +316,7 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         Imports tab to see <i>Ictalurus</i> alone.</p>
       <p>The trade codes counted from 2012 on, each holding only catfish:</p>
       <div class="tablewrap" style="max-height:none"><table class="codes"><thead><tr><th>HS code</th><th>Product</th><th>Counted in</th></tr></thead><tbody>
-        <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports and exports (exports counted as fresh, see below)</td></tr>
+        <tr><td>0304.62</td><td>Frozen fillets</td><td>Imports and exports</td></tr>
         <tr><td>0304.32</td><td>Fresh or chilled fillets</td><td>Imports and exports</td></tr>
         <tr><td>0303.24</td><td>Whole or dressed, frozen</td><td>Imports and exports</td></tr>
         <tr><td>0302.72</td><td>Whole or dressed, fresh or chilled</td><td>Imports and exports</td></tr>
@@ -341,16 +341,16 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
         species. In 2018 to 2020, a large share of Vietnam's frozen fillets (about a third in 2019) was entered under the
         code for other catfish fillets (0304.62.0030) instead of the Pangasius code, so other catfish rises and Pangasius
         falls in those years. Vietnam's catfish is almost all Pangasius, so this most likely reflects how shipments were declared, not a change in species.</p>
-      <h3 id="fresh-frozen">Fresh and frozen exports</h3>
-      <p>Frozen fillets (0304.62) count as <b>fresh</b> exports on this page, with fresh fillets and fresh whole fish; only
-        frozen whole or dressed fish (0303.24) counts as frozen. That follows NOAA Fisheries' product names, so these
-        figures match NOAA's. To see the four products separately, use the Product filter on the Exports tab. For 2005 to
-        2011, exports are fillets only, and frozen fillets count as frozen.</p>
+      <h3 id="fresh-frozen">Export products</h3>
+      <p>Exports are shown as four products, by trade code: fresh fillets, frozen fillets, whole fresh fish and whole
+        frozen fish. NOAA Fisheries' product names group frozen fillets (0304.62) with fresh, so NOAA's "fresh" catfish
+        exports equal fresh fillets, frozen fillets and whole fresh fish here.</p>
       <h3>How it's measured</h3>
       <ul>
         <li><b>Imports.</b> Pounds count fish that cleared customs for use in the United States (Census calls these imports for
           consumption). Dollars are the customs value of all arrivals (general imports). NOAA Fisheries reports catfish trade
-          the same way. A few shipments show a value but no pounds; they count in dollars only.</li>
+          the same way. A few shipments arrived but had not cleared customs for use in the United States that month, so they
+          show a value but no pounds; they count in dollars only.</li>
         <li><b>Exports</b> are domestic exports only: catfish of U.S. origin. Re-exports of imported catfish are left out.</li>
         <li><b>Pounds</b> are product weight as shipped (not live weight), converted from Census's kilograms
           (1 kg = 2.20462 lb).</li>
@@ -482,16 +482,25 @@ const S = {
 const pass = (dir, st, r) => !(st.form !== "all" && r.f !== +st.form) && !(dir === "imp" && st.species !== "all" && r.s !== +st.species);
 // Export fresh/frozen: from 2012 only whole or dressed frozen fish counts as frozen (NOAA's product names
 // call frozen fillets fresh); before 2012 frozen fillets count as frozen. See About the data.
-const isFrozen = (r) => r.f === 2 || (r.f === 0 && D.months[r.m] < (D.meta.censusFrom || "2012-01"));
-const frozenNote = () => el("p", { class: "note", style: "margin-top:6px" }, ["Frozen fillets count as fresh here. ",
-  el("a", { href: "#fresh-frozen", text: "See About the data", onclick: (e) => { e.preventDefault(); openAnchor("fresh-frozen"); } }), "."]);
 // the Product (and Species) selection, for chart labels and notes
 const selTxt = (dir, st) => [st.form !== "all" ? D.forms[st.form].toLowerCase() : null, dir === "imp" && st.species !== "all" ? D.species[st.species] : null].filter(Boolean).join(", ");
 const naWhole = (dir, st) => dir === "exp" && (+st.form === 2 || +st.form === 3);   // whole fish exports aren't counted before 2012: "–", not 0
 const NA_TXT = "not counted before 2012";
-// Ictalurus from China: declared near $0.85/lb every month since June 2025, against $1.40-1.50 in 2024 and $1.51 or more
-// every year before (checked 2026-11-12). Shown when the species filter can include Ictalurus.
-const CHINA_NOTE = "; Ictalurus from China has been declared well below earlier years since mid-2025";
+// Ictalurus from China dropped to about $0.85/lb in June 2025 (2024: $1.34-1.75 a month). The note gives both ranges from
+// the data, in the dollars shown, and drops out by itself once any of the latest 3 months is back at or above 2024's lowest
+// month (or under 10,000 lb). Shown when the species filter can include Ictalurus.
+function chinaNote() {
+  const ci = D.countries.findIndex((c) => c.name === "China"), from = IDX.get("2025-06");
+  if (ci < 0 || from == null) return "";
+  const by = new Map();
+  for (const r of R.imp) if (r.c === ci && r.s === 0) { const o = by.get(r.m) ?? { lb: 0, usd: 0 }; o.lb += r.lb; o.usd += r.usd; by.set(r.m, o); }
+  const pr = (i) => { const o = by.get(i); return o && o.lb >= SMALL ? o.usd / o.lb : null; };
+  const base = range(0, N - 1).filter((i) => yr(i) === 2024).map(pr).filter((v) => v != null);
+  const since = range(from, N - 1).map(pr).filter((v) => v != null), last3 = range(N - 3, N - 1).map(pr);
+  if (!base.length || !since.length || last3.some((v) => v == null || v >= Math.min(...base))) return "";
+  const span = (a) => `$${Math.min(...a).toFixed(2)} to $${Math.max(...a).toFixed(2)}`;
+  return `; since June 2025, Ictalurus from China has been declared at ${span(since)} per pound, against ${span(base)} in 2024`;
+}
 // the one line of the "Total" view, named for the Product and Species selection when there is one
 const totName = (dir, st) => { const s = selTxt(dir, st); return s ? s[0].toUpperCase() + s.slice(1) : `All ${WORD[dir].noun}`; };
 const EXP_FORMS = [1, 0, 3, 2];   // fresh fillets, frozen fillets, whole fresh, whole frozen
@@ -812,7 +821,7 @@ function drawOverTime(dir) {
   $(`#${dir}-ot-note`).textContent = `${unit}.${sel ? ` ${sel[0].toUpperCase() + sel.slice(1)} only.` : ""}${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
   if (dir === "imp") {
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
-    $("#imp-price-note").textContent = `Declared customs value per pound${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}${st.species === "all" || +st.species === 0 ? CHINA_NOTE : ""}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
+    $("#imp-price-note").textContent = `Declared customs value per pound${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}${st.species === "all" || +st.species === 0 ? chinaNote() : ""}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
     lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: `Average import price by species${sel ? ", " + sel : ""}, ${unitTxt("price")}`, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: totName("imp", st), cls: "s-avg", values: pr(() => true) },
       ...(st.species === "all" ? D.species.slice(0, 2) : []).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),   // one species picked: its line is the total
@@ -849,9 +858,9 @@ function render(dir) {
   const zsum = rank.reduce((a, [, o]) => ({ lb: a.lb + o.lb, usd: a.usd + o.usd }), { lb: 0, usd: 0 }), T = zoned ? zsum : cur.tot;
   const usTot = zoned ? ` (U.S. total ${lbTxt(cur.tot.lb)})` : "";
   $(`#${dir}-sub`).textContent = `${P.label}${filt.length ? " · " + filt.join(" · ") : ""}: ` + (preNA ? `${NA_TXT}.` : zoned && !rank.length
-    ? `no ${w.noun} ${w.toFrom} ${zone}${usTot}.`
+    ? `no ${w.noun} ${w.toFrom} ${zIn(zone)}${usTot}.`
     : `${zoned ? `${zone}, ` : ""}${lbTxt(T.lb)}, ${usdTxt(T.usd)}, ${priceTxt(T)}, ${w.toFrom} ${rank.length} ${rank.length === 1 ? "country" : "countries"}${usTot}.`) + moneyNote();
-  $(`#${dir}-legend`).textContent = preNA ? "" : !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zone} in ${P.label}.`
+  $(`#${dir}-legend`).textContent = preNA ? "" : !rank.length && zoned ? `No U.S. ${w.noun} ${w.toFrom} ${zIn(zone)} in ${st.period === "12m" ? "the " : ""}${P.label}.`
     : `Circle size shows ${st.measure === "usd" ? "dollars" : "pounds (product weight)"}. Click a country for its details, or a total row in the list for the whole ${zoned ? "region" : "selection"}.`;
   // ranked list
   const mcls = (m) => `n opt${st.measure === m ? " on" : ""}`;
@@ -878,10 +887,10 @@ function render(dir) {
   const zch = nc ? NC : change(val(zt, st.measure), prev.tot ? val(zp, st.measure) : null),
     tch = nc ? NC : change(val(cur.tot, st.measure), prev.tot ? val(prev.tot, st.measure) : null), zsh = cur.tot[sbasis] ? (100 * zt[sbasis]) / cur.tot[sbasis] : 0;
   const totalProps = (on) => (on ? { tabindex: "0", class: "pick", "aria-current": st.country == null ? "true" : null, onclick: () => pick(dir, null), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(dir, null); } } } : {});
-  const zoneRow = zoned && rank.length ? el("tr", { ...totalProps(true), class: "zone pick" }, [el("td", { text: `${zone} total` }), el("td", { class: mcls("lb"), text: tblLb(zt.lb) }), el("td", { class: mcls("usd"), text: tblUsd(zt.usd) }), el("td", { class: mcls("price"), text: zt.lb ? `$${(zt.usd / zt.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: `${zsh < 0.1 && zsh > 0 ? "<0.1" : zsh.toFixed(1)}%` }), el("td", { class: `n ${zch.c}`, text: zch.t, title: zch.title })]) : null;
+  const zoneRow = zoned && rank.length ? el("tr", { ...totalProps(true), class: "zone pick" }, [el("td", { text: `${zone} total${zNote(zone)}` }), el("td", { class: mcls("lb"), text: tblLb(zt.lb) }), el("td", { class: mcls("usd"), text: tblUsd(zt.usd) }), el("td", { class: mcls("price"), text: zt.lb ? `$${(zt.usd / zt.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: `${zsh < 0.1 && zsh > 0 ? "<0.1" : zsh.toFixed(1)}%` }), el("td", { class: `n ${zch.c}`, text: zch.t, title: zch.title })]) : null;
   const tfoot = el("tfoot", {}, [zoneRow, el("tr", totalProps(!zoned), [el("td", { text: zoned ? "All countries (U.S. total)" : "All countries" }), el("td", { class: mcls("lb"), text: tblLb(cur.tot.lb) }), el("td", { class: mcls("usd"), text: tblUsd(cur.tot.usd) }), el("td", { class: mcls("price"), text: cur.tot.lb ? `$${(cur.tot.usd / cur.tot.lb).toFixed(2)}` : "–" }), el("td", { class: "n", text: "100%" }), el("td", { class: `n ${tch.c}`, text: tch.t, title: tch.title })])]);
   $(`#${dir}-table`).replaceChildren(el("table", { class: "rank" }, [thead, tbody, tfoot]));
-  $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zone}` : ""}, ${P.label}`;
+  $(`#${dir}-list-h`).textContent = `${w.list}${zoned ? ` in ${zIn(zone)}${zNote(zone)}` : ""}, ${P.label}`;
   const early = dir === "exp" && ([...P.cur, ...(P.prev || [])].some((i) => D.months[i] < cf) || P.focusYear - 3 < +cf.slice(0, 4));
   // one fillets-only sentence: with n/c it also explains the missing change, instead of saying it twice
   const lead = nc ? "Export totals before 2012 count fillets only, so no change is shown (n/c). " : early ? FILLETS_NOTE + " " : "";
@@ -894,7 +903,7 @@ function render(dir) {
 // annual bars for the country or region total the details show (drawn even when the period has no trade)
 function drawYears(dir, P, host) {
   const st = S[dir], w = WORD[dir], c = st.country, zone = st.zoom, m = st.measure;
-  const who = c != null ? D.countries[c].name : zone === "World" ? "All countries" : `All of ${zone}`;
+  const who = c != null ? D.countries[c].name : zone === "World" ? "All countries" : `All of ${zIn(zone)}`;
   const ms = monthly(dir, st, null, c != null ? (r) => r.c === c : (r) => inZone(r.c, zone));
   const an = annual(ms), part = mo(N - 1) < 11 ? an.length - 1 : null;
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
@@ -948,17 +957,20 @@ function drawMap(dir, curArg) {
 // the region buttons filter the whole tab: map, list and details (World = every country)
 const ZONES = { Americas: ["Canada and Mexico", "Central America", "Caribbean", "South America"], Caribbean: ["Caribbean"], Europe: ["Europe"],
   "Middle East and Africa": ["Middle East and North Africa", "Sub-Saharan Africa"], Asia: ["Asia"], Oceania: ["Oceania"] };   // one per map view in the export
+// region names in a sentence take "the"; the Americas view nests the Caribbean, so its total and heading say so
+const THE = { Americas: "the Americas", Caribbean: "the Caribbean", "Middle East and Africa": "the Middle East and Africa" };
+const zIn = (z) => THE[z] || z, zNote = (z) => (z === "Americas" ? " (includes the Caribbean)" : "");
 const inZone = (c, zone) => zone === "World" || ZONES[zone].includes(D.countries[c].region);
 function zoomTo(dir, v) { S[dir].zoom = v; S[dir].country = null; hideTip(); render(dir); }
 function pick(dir, c) { S[dir].country = c; hideTip(); render(dir); writeAddr(openTab()); if (innerWidth < 860) $(`#${dir}-detail`).scrollIntoView({ behavior: "smooth", block: "start" }); }
 function drawDetail(dir, P, cur, prev, rank, preNA) {
   const st = S[dir], host = $(`#${dir}-detail`), c = st.country, w = WORD[dir], zone = st.zoom, zoned = zone !== "World";
   host.hidden = preNA;   // "not counted before 2012" is said once, in the subtitle
-  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: zoned ? `No ${w.noun} ${w.toFrom} ${zone} in this period. Choose World or another region.` : `No ${w.noun} in this selection.` })); return; }
+  if (!rank.length) { host.replaceChildren(el("p", { class: "note", text: zoned ? `No ${w.noun} ${w.toFrom} ${zIn(zone)} in this period. Choose World or another region.` : `No ${w.noun} in this selection.` })); return; }
   const whole = c == null, keep = whole ? (r) => inZone(r.c, zone) : (r) => r.c === c;
   const sum = (t) => { const o = { lb: 0, usd: 0 }; for (const [k, v] of t.by) if (whole ? inZone(k, zone) : k === c) { o.lb += v.lb; o.usd += v.usd; } return o; };
   const o = sum(cur), p = P.prev ? sum(prev) : null;
-  const ct = whole ? { name: zoned ? `All of ${zone}` : "All countries", region: zoned ? "Region total" : "U.S. total" } : D.countries[c];
+  const ct = whole ? { name: zoned ? `All of ${zIn(zone)}` : "All countries", region: zoned ? "Region total" : "U.S. total" } : D.countries[c];
   const basis = st.measure === "usd" ? "usd" : "lb";
   const ch0 = splitYears(dir, P) ? NC : change(val(o, st.measure), p ? val(p, st.measure) : null), ch = whole ? ch0 : guardSmall(ch0, o, p);
   const share = cur.tot[basis] ? (100 * o[basis]) / cur.tot[basis] : 0;
@@ -977,16 +989,13 @@ function drawDetail(dir, P, cur, prev, rank, preNA) {
     if (st.species === "all") parts.push(el("div", {}, [el("p", { class: "k", text: "By species (pounds)" }), mixBar(D.species.map((n, i) => ({ name: n, v: sp[i], color: COLORS[i] })))]));
     if (st.form === "all") parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(D.forms.map((n, i) => ({ name: n, v: fm[i], color: COLORS[i + 3] })))]));
   } else if (st.form === "all") {
-    let fresh = 0, frozen = 0;
     const fm = [0, 0, 0, 0];
-    for (const r of R.exp) if (P.cur.has(r.m) && keep(r)) { fm[r.f] += r.lb; if (isFrozen(r)) frozen += r.lb; else fresh += r.lb; }
-    parts.push(el("div", {}, [el("p", { class: "k", text: "Fresh and frozen (pounds)" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]),
-      fresh || frozen ? frozenNote() : null]));
+    for (const r of R.exp) if (P.cur.has(r.m) && keep(r)) fm[r.f] += r.lb;
     parts.push(el("div", {}, [el("p", { class: "k", text: "By product (pounds)" }), mixBar(EXP_FORMS.map((i) => ({ name: D.forms[i], v: fm[i], color: COLORS[i + 3] })))]));
   }
   host.replaceChildren(...[
     el("div", {}, [el("p", { class: "k", text: `${ct.region} · ${P.label}` }), el("h3", { text: ct.name }),
-      whole ? null : el("button", { class: "btn alt", type: "button", style: "margin-top:8px", text: `Show ${zoned ? `all of ${zone}` : "all countries"}`, onclick: () => pick(dir, null) })]),
+      whole ? null : el("button", { class: "btn alt", type: "button", style: "margin-top:8px", text: `Show ${zoned ? `all of ${zIn(zone)}` : "all countries"}`, onclick: () => pick(dir, null) })]),
     el("div", { class: "stats" }, [
       el("div", {}, [el("b", { text: lbTxt(o.lb) }), el("span", { text: "pounds" })]),
       el("div", {}, [el("b", { text: usdTxt(o.usd) }), el("span", { text: "value" })]),
@@ -1021,7 +1030,7 @@ function renderMonth() {
   const chg = (a, b) => { const c = change(a, b); return el("span", { class: c.c, text: c.t }); };
   const topList = (t, n) => [...t.by].sort((a, b) => b[1].lb - a[1].lb).slice(0, n);
   const sp = [0, 0, 0]; for (const r of R.imp) if (r.m === L) sp[r.s] += r.lb;
-  let fresh = 0, frozen = 0; for (const r of R.exp) if (r.m === L) { if (isFrozen(r)) frozen += r.lb; else fresh += r.lb; }
+  const efm = [0, 0, 0, 0]; for (const r of R.exp) if (r.m === L) efm[r.f] += r.lb;
   const card = (k, big, lines) => el("div", { class: "card" }, [el("p", { class: "k", text: k }), el("p", { class: "big", text: big }), el("ul", { class: "lines" }, lines.map((l) => el("li", {}, l)))]);
   // opens the tab at its "by country" section, which is what the button names
   const go = (dir, label) => el("button", { class: "btn alt", type: "button", style: "margin-top:10px", text: label, onclick: () => { show(dir); $(`#${dir}-h`).scrollIntoView({ block: "start" }); } });
@@ -1047,8 +1056,8 @@ function renderMonth() {
         ...topList(ex, 3).map(([c, o]) => el("li", {}, [el("b", { text: `${((100 * o.lb) / ex.tot.lb).toFixed(1)}%` }), ` ${D.countries[c].name}`])),
         el("li", {}, [`${ex.by.size} ${ex.by.size === 1 ? "destination" : "destinations"} in all`]),
       ]),
-      el("p", { class: "k", text: "Fresh and frozen (pounds)", style: "margin-top:12px" }), mixBar([{ name: "Fresh", v: fresh, color: "var(--c3)" }, { name: "Frozen", v: frozen, color: "var(--c1)" }]),
-      frozenNote(), go("exp", "Exports by country")]),
+      el("p", { class: "k", text: "By product (pounds)", style: "margin-top:12px" }), mixBar(EXP_FORMS.map((i) => ({ name: D.forms[i], v: efm[i], color: COLORS[i + 3] }))),
+      go("exp", "Exports by country")]),
   );
   const totLines = (dir, div, name) => {
     const ms = monthly(dir, all);

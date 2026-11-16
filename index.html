@@ -503,7 +503,7 @@ function chinaNote() {
   const since = range(from, N - 1).map(pr).filter((v) => v != null), last3 = range(N - 3, N - 1).map(pr);
   if (!base.length || !since.length || last3.some((v) => v == null || v >= Math.min(...base))) return "";
   const span = (a) => `$${Math.min(...a).toFixed(2)} to $${Math.max(...a).toFixed(2)}`;
-  return `; since June 2025, Ictalurus from China has been declared at ${span(since)} per pound, against ${span(base)} in 2024`;
+  return `since June 2025, Ictalurus from China has been declared at ${span(since)} per pound, against ${span(base)} in 2024`;
 }
 // the one line of the "Total" view, named for the Product and Species selection when there is one
 const totName = (dir, st) => { const s = selTxt(dir, st); return s ? s[0].toUpperCase() + s.slice(1) : `All ${WORD[dir].noun}`; };
@@ -810,7 +810,8 @@ function drawOverTime(dir) {
     // price lines tangle past three: the total and the two largest groups by pounds (Josh, 2026-11-03)
     const lbOf = (g) => g.sum.reduce((a, o) => a + o.lb, 0);
     const lines = st.by === "total" ? [] : used.filter((g, i) => i < named && lbOf(g) > 0).sort((a, b) => lbOf(b) - lbOf(a)).slice(0, 2);
-    if (lines.length) how = ` The total and the 2 largest ${st.by === "species" ? "species" : st.by === "region" ? "destination regions" : w.plural} since ${years[0]} by pounds.`;
+    how = "";   // one group under the filter (one species picked): no "2 largest" to describe
+    if (lines.length > 1) how = ` The total and the 2 largest ${st.by === "species" ? "species" : st.by === "region" ? "destination regions" : w.plural} since ${years[0]} by pounds.`;
     lineChart(host, { labels: ylabels, names: ynames, label, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: totName(dir, st), cls: "s-avg", values: all.map(pr) },
       ...lines.map((g) => ({ name: g.name, cls: "s-now", color: g.color, values: g.sum.map(pr) })),
@@ -822,11 +823,14 @@ function drawOverTime(dir) {
       stacks: used.map((g) => ({ name: g.name, color: g.color, values: g.sum.map(pick) })) });
   }
   const unit = m === "lb" ? "Pounds (product weight)" : m === "usd" ? (S.money === "real" ? `Dollars, in ${mName(IDX.get(D.cpi.base))} dollars` : "Dollars, as reported") : "Average price per pound (years under 1,000 lb left out)";
-  $(`#${dir}-ot-note`).textContent = `${unit}.${sel ? ` ${sel[0].toUpperCase() + sel.slice(1)} only.` : ""}${how}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
+  // the China price note, wherever the Ictalurus price line is drawn: the price chart below, or this chart when it
+  // replaces it ("$ per lb" by species hides the price chart)
+  const cn = dir === "imp" && (st.species === "all" || +st.species === 0) ? chinaNote() : "";
+  $(`#${dir}-ot-note`).textContent = `${unit}.${sel ? ` ${sel[0].toUpperCase() + sel.slice(1)} only.` : ""}${how}${cn && m === "price" && st.by === "species" ? ` ${cn[0].toUpperCase() + cn.slice(1)}.` : ""}${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
   if (dir === "imp") {
     $("#imp-price-card").hidden = m === "price" && st.by === "species";   // the top chart is then the same chart
     const pr = (keep) => years.map((y) => { let lb = 0, usd = 0; for (const r of rows) if (yr(r.m) === y && keep(r)) { lb += r.lb; usd += r.usd; } return lb > 1000 ? usd / lb : null; });
-    $("#imp-price-note").textContent = `Declared customs value per pound${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}${st.species === "all" || +st.species === 0 ? chinaNote() : ""}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
+    $("#imp-price-note").textContent = `Declared customs value per pound${S.money === "real" ? `, in ${mShort(IDX.get(D.cpi.base))} dollars` : ", as reported"}${cn ? "; " + cn : ""}.${part != null ? ` * ${ly} is ${janTo(mo(L))} only.` : ""}`;
     lineChart($("#imp-price"), { labels: ylabels, names: ynames, label: `Average import price by species${sel ? ", " + sel : ""}, ${unitTxt("price")}`, fmt: (v) => `$${v.toFixed(2)}`, series: [
       { name: totName("imp", st), cls: "s-avg", values: pr(() => true) },
       ...(st.species === "all" ? D.species.slice(0, 2) : []).map((n, i) => ({ name: n, cls: "s-now", color: COLORS[i], values: pr((r) => r.s === i) })),   // one species picked: its line is the total

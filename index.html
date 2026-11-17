@@ -146,7 +146,8 @@ h3 { font: 700 18px/1.3 var(--body); margin: 0; }
 .card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r); padding: 18px; min-width: 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
 .k { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0; }
-.big { font: 700 32px/1.1 var(--body); margin: 6px 0 4px; font-variant-numeric: tabular-nums; color: var(--accent); }
+.big { font: 700 32px/1.1 var(--body); margin: 6px 0 4px; font-variant-numeric: tabular-nums; color: var(--accent); white-space: nowrap; }
+.big .u { font-size: 22px; font-weight: 600; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .big { color: var(--line-1); } }
 :root[data-theme="dark"] .big { color: var(--line-1); }
 .lines { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 14.5px; color: var(--ink-2); }
@@ -745,7 +746,7 @@ function buildTrade(dir) {
   // these apply to both sections
   const shared = el("div", { class: "ctrls" }, [
     field("Show", segBtns(`${dir}-measure`, [["lb", "Pounds"], ["usd", "Dollars"], ["price", "$ per lb"]], st.measure, (v) => { st.measure = v; render(dir); })),
-    field("Dollars", moneySeg(`${dir}-money`)),
+    field("Inflation", moneySeg(`${dir}-money`)),
     el("div", { class: "pair" }, [field("Product", select(`${dir}-form`, [["all", "All products"],
       ...(dir === "imp" ? D.forms.map((f, i) => [i, f]) : EXP_FORMS.map((i) => [i, D.forms[i]]))], st.form, (v) => { st.form = v; render(dir); }, "Product", true)),
     dir === "imp" ? field("Species", select("imp-species", [["all", "All species"], ...D.species.map((s, i) => [i, s])], st.species, (v) => { st.species = v; render(dir); }, "Species", true)) : null,
@@ -762,7 +763,7 @@ function buildTrade(dir) {
   const byOpts = dir === "imp" ? [["total", "Total"], ["country", "By country"], ["species", "By species"]] : [["total", "Total"], ["region", "By region"]];
   host.replaceChildren(...[
     el("div", {}, [el("h2", { text: `U.S. catfish ${w.noun} since ${D.meta.first.slice(0, 4)}` }),
-      el("p", { class: "sub", text: `Annual totals. ${dir === "imp" ? "Show, Dollars, Product and Species" : "Show, Dollars and Product"} apply here and to ${w.noun} by country below.` })]),
+      el("p", { class: "sub", text: `Annual totals. ${dir === "imp" ? "Show, Inflation, Product and Species" : "Show, Inflation and Product"} apply here and to ${w.noun} by country below.` })]),
     shared,
     el("div", { class: "card" }, [
       el("div", { class: "cardbar" }, [el("h3", { text: `${Noun} by year` }), segBtns(`${dir}-by`, byOpts, st.by, (v) => { st.by = v; drawOverTime(dir); })]),
@@ -1060,7 +1061,9 @@ function renderMonth() {
   const topList = (t, n) => [...t.by].sort((a, b) => b[1].lb - a[1].lb).slice(0, n);
   const sp = [0, 0, 0]; for (const r of R.imp) if (r.m === L) sp[r.s] += r.lb;
   const efm = [0, 0, 0, 0]; for (const r of R.exp) if (r.m === L) efm[r.f] += r.lb;
-  const card = (k, big, lines) => el("div", { class: "card" }, [el("p", { class: "k", text: k }), el("p", { class: "big", text: big }), el("ul", { class: "lines" }, lines.map((l) => el("li", {}, l)))]);
+  // the headline's unit ("million lb") is set smaller so the figure stays on one line in a narrow card
+  const bigTxt = (t) => { const m = /^([\d.,]+) (.+)$/.exec(t); return m ? [m[1], el("span", { class: "u", text: ` ${m[2]}` })] : [t]; };
+  const card = (k, big, lines) => el("div", { class: "card" }, [el("p", { class: "k", text: k }), el("p", { class: "big" }, bigTxt(big)), el("ul", { class: "lines" }, lines.map((l) => el("li", {}, l)))]);
   // opens the tab at its "by country" section, which is what the button names
   const go = (dir, label) => el("button", { class: "btn alt", type: "button", style: "margin-top:10px", text: label, onclick: () => { show(dir); $(`#${dir}-h`).scrollIntoView({ block: "start" }); } });
   $("#month-cards").replaceChildren(

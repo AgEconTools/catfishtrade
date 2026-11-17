@@ -1203,7 +1203,7 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     const showBox = (url) => {
       field.value = url; box.hidden = false; field.focus(); field.select();
       let ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
-      if (ok) say("Link copied");
+      if (ok) { hideBox(); btn.focus(); say("Link copied"); }   // copied after all: nothing left to do by hand
       else { msg.textContent = "Copy the link shown below the button."; }
     };
     document.getElementById("share-close").addEventListener("click", () => { hideBox(); btn.focus(); });

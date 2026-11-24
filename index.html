@@ -299,17 +299,17 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
 
 <nav class="tabs" aria-label="Dashboard sections">
   <div class="wrap" role="tablist">
-    <button class="tab" role="tab" id="t-month" aria-controls="month" data-tab="month"><span class="l">Latest month</span><span class="s">Latest month</span></button>
-    <button class="tab" role="tab" id="t-imp" aria-controls="imp" data-tab="imp"><span class="l">Imports</span><span class="s">Imports</span></button>
-    <button class="tab" role="tab" id="t-exp" aria-controls="exp" data-tab="exp"><span class="l">Exports</span><span class="s">Exports</span></button>
-    <button class="tab" role="tab" id="t-about" aria-controls="about" data-tab="about"><span class="l">About the data</span><span class="s">About</span></button>
+    <button class="tab" role="tab" id="t-month" aria-controls="tab-month" data-tab="month"><span class="l">Latest month</span><span class="s">Latest month</span></button>
+    <button class="tab" role="tab" id="t-imp" aria-controls="tab-imp" data-tab="imp"><span class="l">Imports</span><span class="s">Imports</span></button>
+    <button class="tab" role="tab" id="t-exp" aria-controls="tab-exp" data-tab="exp"><span class="l">Exports</span><span class="s">Exports</span></button>
+    <button class="tab" role="tab" id="t-about" aria-controls="tab-about" data-tab="about"><span class="l">About the data</span><span class="s">About</span></button>
   </div>
 </nav>
 
 <main class="wrap" id="main" tabindex="-1">
   <noscript><p class="warn">This page needs JavaScript to show the trade data.</p></noscript>
   <!-- Latest month -->
-  <section class="panel" id="month" role="tabpanel" aria-labelledby="t-month">
+  <section class="panel" id="tab-month" role="tabpanel" aria-labelledby="t-month">
     <div><h2 id="month-h">Latest month</h2><p class="sub" id="month-sub"></p></div>
     <div class="cards" id="month-cards"></div>
     <p class="note">Pounds are product weight, as shipped: a pound of fillets is a pound of fillets, not the live weight
@@ -321,11 +321,11 @@ footer p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
   </section>
 
   <!-- Imports / Exports share one layout, built by the script -->
-  <section class="panel" id="imp" role="tabpanel" aria-labelledby="t-imp" hidden></section>
-  <section class="panel" id="exp" role="tabpanel" aria-labelledby="t-exp" hidden></section>
+  <section class="panel" id="tab-imp" role="tabpanel" aria-labelledby="t-imp" hidden></section>
+  <section class="panel" id="tab-exp" role="tabpanel" aria-labelledby="t-exp" hidden></section>
 
   <!-- About -->
-  <section class="panel about" id="about" role="tabpanel" aria-labelledby="t-about" hidden>
+  <section class="panel about" id="tab-about" role="tabpanel" aria-labelledby="t-about" hidden>
     <div><h2>About the data</h2><p class="sub">What's counted, how it's measured, and where it comes from.</p></div>
     <div class="card">
       <h3>What's counted</h3>
@@ -750,7 +750,7 @@ function select(id, opts, cur, onPick, label, short = false) {
 }
 const built = { imp: false, exp: false };
 function buildTrade(dir) {
-  const w = WORD[dir], host = $(`#${dir}`), st = S[dir], Noun = w.noun[0].toUpperCase() + w.noun.slice(1);
+  const w = WORD[dir], host = $(`#tab-${dir}`), st = S[dir], Noun = w.noun[0].toUpperCase() + w.noun.slice(1);
   const L = N - 1, years = [...new Set(D.months.map((s) => +s.slice(0, 4)))].reverse();
   // these apply to both sections
   const shared = el("div", { class: "ctrls" }, [
@@ -860,7 +860,7 @@ const moneyLabel = () => `In ${mShort(IDX.get(D.cpi.base))} dollars`;
 const moneySeg = (id) => segBtns(id, [["nom", "As reported"], ["real", moneyLabel()]], S.money, setMoney);
 function setMoney(v) {
   S.money = v; R = v === "real" ? Rr : Rn;
-  const tab = TABS.find((t) => !$(`#${t}`).hidden);
+  const tab = TABS.find((t) => !$(`#tab-${t}`).hidden);
   if (tab === "imp" || tab === "exp") render(tab);
 }
 const moneyNote = () => (S.money !== "real" ? "" : ` Dollars are adjusted for inflation to ${mName(IDX.get(D.cpi.base))} dollars (CPI-U).`
@@ -1127,10 +1127,10 @@ function writeAddr(tab) {
   const qs = q.toString(), url = `${location.pathname}${qs ? "?" + qs : ""}#${ADDR[tab] || tab}`;
   try { if (location.pathname + location.search + location.hash !== url) history.replaceState(null, "", url); } catch (e) { /* sandboxed */ }
 }
-const openTab = () => TABS.find((x) => !$(`#${x}`).hidden) || "month";
+const openTab = () => TABS.find((x) => !$(`#tab-${x}`).hidden) || "month";
 function show(tab, keepHash = false) {
   tab = tabOf(tab) || "month";
-  for (const t of TABS) { $(`#${t}`).hidden = t !== tab; $(`#t-${t}`).setAttribute("aria-selected", String(t === tab)); $(`#t-${t}`).tabIndex = t === tab ? 0 : -1; }
+  for (const t of TABS) { $(`#tab-${t}`).hidden = t !== tab; $(`#t-${t}`).setAttribute("aria-selected", String(t === tab)); $(`#t-${t}`).tabIndex = t === tab ? 0 : -1; }
   if (tab === "imp" || tab === "exp") render(tab);
   else if (tab === "month") renderMonth();
   if (!keepHash) writeAddr(tab);
@@ -1151,12 +1151,12 @@ let lastW = innerWidth, rz;   // charts are drawn to their box, so redraw the op
 addEventListener("resize", () => {
   if (!D || innerWidth === lastW) return;
   lastW = innerWidth; clearTimeout(rz);
-  rz = setTimeout(() => { const t = TABS.find((x) => !$(`#${x}`).hidden); if (t === "month") renderMonth(); else if (t === "imp" || t === "exp") render(t); }, 200);
+  rz = setTimeout(() => { const t = TABS.find((x) => !$(`#tab-${x}`).hidden); if (t === "month") renderMonth(); else if (t === "imp" || t === "exp") render(t); }, 200);
 });
 // a link to a heading inside a tab (#fresh-frozen) opens that tab there; other anchors (#disclaimer) just scroll
 function openAnchor(id) {
   const a = document.getElementById(id); if (!a) return false;
-  const p = a.closest(".panel"); if (p) show(p.id, true);
+  const p = a.closest(".panel"); if (p) show(p.id.replace(/^tab-/, ""), true);
   a.scrollIntoView(); return true;
 }
 addEventListener("hashchange", () => { if (!D) return; const h = location.hash.slice(1), t = tabOf(h); if (t) show(t); else openAnchor(h); });

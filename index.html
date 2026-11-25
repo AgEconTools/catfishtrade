@@ -259,6 +259,25 @@ table.rank td .few { display: block; width: fit-content; margin: 2px 0 0 auto; w
 .chart .cur { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart:focus:not(:focus-visible) { outline: none; }   /* a mouse click or tap focuses the chart too; the ring is for the keyboard */
 .readout { font-size: 13.5px; min-height: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); margin: 4px 0 0; }
+/* Share this chart (Josh, 11/24/2026; the design of Cattle Auction Prices'): the button under each chart and map, and the picture's panel */
+.chart-share { display: grid; justify-items: end; gap: 10px; margin-top: 4px; }
+:not(:has(svg)) + .chart-share { display: none; }   /* nothing drawn (a "none" note instead): nothing to share */
+.cs-btn { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--body); color: var(--ink-2); background: transparent;
+          border: 1px solid var(--rule); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+.cs-btn:hover { color: var(--ink); border-color: var(--muted); }
+.cs-btn[disabled] { cursor: progress; }
+.cs-btn svg { width: 14px; height: 14px; flex: none; }
+.cs-btn:focus-visible, .cs-act:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.cs-panel { justify-self: stretch; display: grid; gap: 10px; padding: 12px; border: 1px solid var(--rule); border-radius: var(--r); background: var(--bg); }
+.cs-panel[hidden] { display: none; }
+.cs-img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 6px; background: #fff; }
+.cs-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.cs-act { font: 600 14px/1 var(--body); padding: 10px 16px; border-radius: 999px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+.cs-act:first-child { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.cs-panel .note { margin: 0; }
+.cs-msg:empty { display: none; }
+@media (max-width: 640px) { .cs-btn { min-height: 44px; } .cs-act { min-height: 44px; } }
+@media print { .chart-share { display: none; } }
 .about h3 { margin-top: 6px; }
 .about p, .about li { max-width: 78ch; }
 table.codes { border-collapse: collapse; font-size: 14px; }
@@ -606,8 +625,11 @@ function keyNav(svg, n, at, show, hide) {
 const srTable = (label, head, rows) => el("div", { class: "sr-only" }, el("table", {}, [el("caption", { text: label }),
   el("thead", {}, el("tr", {}, head.map((h) => el("th", { scope: "col", text: h })))),
   el("tbody", {}, rows.map(([r, ...cells]) => el("tr", {}, [el("th", { scope: "row", text: r }), ...cells.map((c) => el("td", { text: c }))])))]));
-function lineChart(host, { labels, names, series, fmt, tipFmt, label }) {   // names: full labels for the readout and table
-  const W = chartW(host), H = chartH(W), L = 52, Rt = 14, T = 12, B = 28;
+function lineChart(host, opts) {   // names: full labels for the readout and table
+  const { labels, names, series, fmt, tipFmt, label, shot } = opts;
+  // Share this chart: the same chart again at the picture's width and height (shot)
+  host._redraw = (h, ht, wd) => lineChart(h, { ...opts, shot: { w: wd, h: ht } });
+  const W = shot ? shot.w : chartW(host), H = shot ? Math.round(shot.h) : chartH(W), L = 52, Rt = 14, T = 12, B = 28;
   const all = series.flatMap((s) => s.values).filter((v) => v != null);
   const max = niceMax(Math.max(0, ...all));
   const x = (i) => L + (i * (W - L - Rt)) / Math.max(1, labels.length - 1);
@@ -643,9 +665,12 @@ function lineChart(host, { labels, names, series, fmt, tipFmt, label }) {   // n
   host.replaceChildren(svg, keys, out, srTable(label, [names ? "Year" : "Month", ...series.map((s) => s.name)],
     (names || labels).map((t, i) => [t, ...series.map((s) => val(s, i))])));
 }
-function barChart(host, { cats, stacks, fmt, tipFmt, hilite, partial, label, breakAt, breakLabel, naBefore }) {   // naBefore: bars before this index aren't counted
+function barChart(host, opts) {   // naBefore: bars before this index aren't counted
+  const { cats, stacks, fmt, tipFmt, hilite, partial, label, breakAt, breakLabel, naBefore, shot } = opts;
+  // Share this chart: the same chart again at the picture's size, without the box marking the period's year
+  host._redraw = (h, ht, wd) => barChart(h, { ...opts, hilite: null, shot: { w: wd, h: ht } });
   const na = (i) => naBefore != null && i < naBefore;
-  const W = chartW(host), H = chartH(W), L = 52, Rt = 8, T = 12, B = 28;
+  const W = shot ? shot.w : chartW(host), H = shot ? Math.round(shot.h) : chartH(W), L = 52, Rt = 8, T = 12, B = 28;
   const totals = cats.map((_, i) => stacks.reduce((s, st) => s + (st.values[i] || 0), 0));
   let max = niceMax(Math.max(0, ...totals));
   const bw = (W - L - Rt) / cats.length;
@@ -776,14 +801,14 @@ function buildTrade(dir) {
     shared,
     el("div", { class: "card" }, [
       el("div", { class: "cardbar" }, [el("h3", { text: `${Noun} by year` }), segBtns(`${dir}-by`, byOpts, st.by, (v) => { st.by = v; drawOverTime(dir); })]),
-      el("p", { class: "note", id: `${dir}-ot-note`, style: "margin:4px 0 8px" }), el("div", { id: `${dir}-ot` })]),
-    dir === "imp" ? el("div", { class: "card", id: "imp-price-card" }, [el("h3", { text: "Average import price by species" }), el("p", { class: "note", id: "imp-price-note", style: "margin:4px 0 8px" }), el("div", { id: "imp-price" })]) : null,
+      el("p", { class: "note", id: `${dir}-ot-note`, style: "margin:4px 0 8px" }), ...withShare(el("div", { id: `${dir}-ot` }))]),
+    dir === "imp" ? el("div", { class: "card", id: "imp-price-card" }, [el("h3", { text: "Average import price by species" }), el("p", { class: "note", id: "imp-price-note", style: "margin:4px 0 8px" }), ...withShare(el("div", { id: "imp-price" }))]) : null,
     el("p", { class: "note", id: `${dir}-ot-src` }),
     el("div", { class: "sec" }, [el("h2", { id: `${dir}-h` }), el("p", { class: "sub", id: `${dir}-sub` })]),
     local,
     el("div", { class: "card mapcard" }, [
       el("div", { class: "mapbar" }, [el("p", { class: "legend", id: `${dir}-legend` })]),
-      el("div", { id: `${dir}-map` }),
+      ...withShare(el("div", { id: `${dir}-map` }), true),
     ]),
     el("div", { class: "split" }, [
       el("div", { class: "card", id: `${dir}-list` }, [el("h3", { id: `${dir}-list-h` }), el("p", { class: "note", id: `${dir}-list-note`, style: "margin:4px 0 8px" }), el("div", { class: "tablewrap", id: `${dir}-table` }), el("p", { class: "note", id: `${dir}-key`, style: "margin:8px 0 0" }), el("p", { class: "note", id: `${dir}-gone`, style: "margin:6px 0 0" })]),
@@ -840,6 +865,7 @@ function drawOverTime(dir) {
       breakAt: dir === "exp" ? breakIdx(years) : null, breakLabel: BREAK_LABEL, naBefore: na ? breakIdx(years) : null,
       stacks: used.map((g) => ({ name: g.name, color: g.color, values: g.sum.map(pick) })) });
   }
+  host._how = st.by === "species" && m !== "price" ? "" : how.trim();   // Share this chart: which groups the picture shows
   const unit = m === "lb" ? "Pounds (product weight)" : m === "usd" ? (S.money === "real" ? `Dollars, in ${mName(IDX.get(D.cpi.base))} dollars` : "Dollars, as reported") : "Average price per pound (years under 1,000 lb left out)";
   // the China price note, wherever the Ictalurus price line is drawn: the price chart below, or this chart when it
   // replaces it ("$ per lb" by species hides the price chart)
@@ -981,10 +1007,15 @@ function drawMap(dir, curArg) {
   const basis = st.measure === "usd" ? "usd" : "lb";
   const items = [...cur.by].filter(([c, o]) => o[basis] > 0 && inZone(c, st.zoom)).sort((a, b) => b[1][basis] - a[1][basis]);
   const max = items.length ? items[0][1][basis] : 1;
-  const RMAX = 34 * Math.pow(k, 0.55);
+  const RMAX = 34 * Math.pow(k, 0.55), rad = (o) => Math.max(2.2 * Math.pow(k, 0.55), RMAX * Math.sqrt(o[basis] / max));
+  // Share this chart: the map as shown (view, shaded countries, circles), without the selection and nothing to click
+  host._redraw = (h) => h.replaceChildren(sv("svg", { class: "mapsvg", viewBox: vb.join(" ") }, [
+    sv("g", {}, [...ms.paths].map(([name, p]) => sv("path", { class: p.classList.contains("has") ? "land has" : "land", d: p.getAttribute("d") }))),
+    sv("g", {}, items.map(([c, o]) => sv("circle", { class: "bub", cx: D.countries[c].at[0], cy: D.countries[c].at[1], r: rad(o).toFixed(2) })))]));
+  host._items = items;
   ms.bubs.replaceChildren(...items.map(([c, o]) => {
     const [cx, cy] = D.countries[c].at;
-    const r = Math.max(2.2 * Math.pow(k, 0.55), RMAX * Math.sqrt(o[basis] / max));
+    const r = rad(o);
     const name = D.countries[c].name;
     const share = cur.tot[basis] ? ((100 * o[basis]) / cur.tot[basis]).toFixed(1) : "0";
     const rows = [["Pounds", lbTxt(o.lb)], ["Dollars", usdTxt(o.usd)], ["Price", `${priceTxt(o)}${o.lb > 0 && o.lb < SMALL ? " (under 10K\u00a0lb)" : ""}`], ["Share", `${share}%`]];
@@ -1017,9 +1048,9 @@ function drawDetail(dir, P, cur, prev, rank, preNA) {
   const fy = P.focusYear, m = st.measure, sel = selTxt(dir, st);
   const fmt = m === "lb" ? (v) => compact(v) : axTxt(m);
   const tipFmt = m === "lb" ? (v) => `${nf.format(Math.round(v))} lb` : m === "usd" ? (v) => usdTxt(v) : (v) => `$${v.toFixed(2)}/lb`;
-  const mchart = el("div");
+  const mchart = el("div", { id: `${dir}-mchart` });
   // the U.S. total's years are already the chart at the top of the tab
-  const yearsBox = whole && !zoned ? null : el("div");
+  const yearsBox = whole && !zoned ? null : el("div", { id: `${dir}-years` });
   const parts = [];
   if (dir === "imp") {
     const sp = [0, 0, 0], fm = [0, 0, 0, 0, 0];
@@ -1043,9 +1074,9 @@ function drawDetail(dir, P, cur, prev, rank, preNA) {
         : el("div", {}, [el("b", { text: `${share < 0.1 && share > 0 ? "<0.1" : share.toFixed(1)}%` }), el("span", { text: `of U.S. ${w.noun}${st.form !== "all" || (dir === "imp" && st.species !== "all") ? " in this selection" : ""}` })]),
       el("div", {}, [el("b", { class: ch.c, text: ch.t, title: ch.title }), el("span", { text: !P.prev ? "no earlier year" : ch === NC ? `not comparable with ${P.prevLabel}` : ch === FEW ? (p && p.lb ? `${lbTxt(p.lb)} in ${P.prevLabel}` : `none in ${P.prevLabel}`) : `${m === "price" ? "price" : m === "usd" ? "value" : "pounds"} vs. ${P.prevLabel}` })]),
     ]),
-    yearsBox ? el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${mo(N - 1) < 11 ? ` (* ${yr(N - 1)} is ${janTo(mo(N - 1))})` : ""}` }), yearsBox]) : null,
+    yearsBox ? el("div", {}, [el("p", { class: "k", text: `By year since ${D.meta.first.slice(0, 4)}${mo(N - 1) < 11 ? ` (* ${yr(N - 1)} is ${janTo(mo(N - 1))})` : ""}` }), ...withShare(yearsBox)]) : null,
     ...parts,
-    el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), mchart]),
+    el("div", {}, [el("p", { class: "k", text: `By month: ${fy} vs. ${fy - 1} and the 3-year average` }), ...withShare(mchart)]),
   ].filter(Boolean));
   // drawn once the boxes are on the page, so the charts know their width
   if (yearsBox) drawYears(dir, P, yearsBox);
@@ -1112,6 +1143,248 @@ function renderMonth() {
   totLines("imp", 1e6, "U.S. catfish imports by month, million pounds");
   totLines("exp", 1e3, "U.S. catfish exports by month, thousand pounds");
 }
+
+// ---- Share this chart (Josh, 11/24/2026; the design of Cattle Auction Prices') ----
+// A button under each chart and map makes a picture of it to paste into a slide, document or text message: the
+// chart drawn again at a fixed size (800 px wide, about 450 tall for a chart, saved at 2x: 1600 px wide, so lines
+// and type hold up on a slide) in the light colors whatever the page's theme, with a title naming what it shows, a
+// subtitle, its legend, the Source line with the data month, any footnote, and the page's name and address. The
+// phone's share sheet where it takes files, Copy image where the clipboard takes pictures, Download always; the
+// picture shows in the panel too, to press and hold where a browser blocks all three.
+const SHOT = { W: 800, PAD: 28, H: 450, SCALE: 2, MAPH: 520 };
+// the picture's last line (Josh, 11/24/2026), "Map:" on a map's picture, never "Chart:" (Josh: a map is not labeled a chart)
+const SHOT_SITE = "U.S. Catfish Trade Dashboard, Mississippi State University Extension (agecontools.github.io/catfishtrade)";
+const shotKind = (spec) => (spec.map ? "map" : "chart");
+const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+const shotYears = () => `${D.meta.first.slice(0, 4)}–${yr(N - 1)}`;
+// the page's own data credit, trimmed to the years a chart reaches, then the data month
+const shotSource = (from, dollars) => `Source: ${from < 2012 ? "U.S. Census Bureau, International Trade data (2012 on), and NOAA Fisheries, Foreign Trade data (2005–2011)" : "U.S. Census Bureau, International Trade data"}${dollars && S.money === "real" ? "; inflation adjustment, U.S. Bureau of Labor Statistics, CPI-U" : ""}. Data through ${mName(N - 1)}.`;
+// what a chart counts: the Product and Species selection
+const shotWhat = (dir, st) => {
+  const prod = st.form === "all" ? null : D.forms[st.form].toLowerCase(), spec = dir === "imp" && st.species !== "all" ? D.species[st.species] : null;
+  if (!prod && !spec) return dir === "imp" ? "All products and species" : "All products";
+  return cap([prod || "all products", dir === "imp" ? spec || "all species" : null].filter(Boolean).join(", "));
+};
+const shotNoun = (dir, m) => (m === "lb" ? `U.S. catfish ${WORD[dir].noun}` : m === "usd" ? `U.S. catfish ${dir === "imp" ? "import" : "export"} value`
+  : `Average U.S. catfish ${dir === "imp" ? "import" : "export"} price`);
+const shotUnit = (m) => { const real = S.money === "real" ? `in ${mName(IDX.get(D.cpi.base))} dollars` : "as reported";
+  return m === "lb" ? "pounds (product weight)" : m === "usd" ? `dollars, ${real}` : `dollars per pound, ${real}`; };
+const shotPart = () => (mo(N - 1) < 11 ? `* ${yr(N - 1)} is ${janTo(mo(N - 1))} only.` : null);
+const shotExp = (dir, st) => (dir !== "exp" ? null : naWhole(dir, st) ? "Whole or dressed fish exports weren't counted before 2012." : FILLETS_NOTE);
+const keyNames = (host) => [...host.querySelectorAll(":scope > ul.keys > li")].map((li) => li.textContent.trim());
+// "2026 vs. 2025 and the 3-year average", from the chart's own legend
+const vsTxt = (host) => { const k = keyNames(host); return `${k[0]}${k[1] ? ` vs. ${k[1]}` : ""}${k[2] ? " and the 3-year average" : ""}`; };
+const BY_TXT = { total: () => "by year", country: (dir) => `by year and ${dir === "imp" ? "supplying" : "destination"} country`, species: () => "by year and species", region: () => "by year and destination region" };
+// one title rule per chart, keyed by the chart's id: a new chart needs one (tests/check_share_text.py)
+const monthSpec = (dir) => { const ly = yr(N - 1), h = $(`#month-${dir}-chart`);
+  return { title: `U.S. catfish ${WORD[dir].noun} by month: ${vsTxt(h)}`,
+    sub: `${dir === "imp" ? "All products and species, from every country. Monthly, in million pounds" : "All products, to every country. Monthly, in thousand pounds"} (product weight).`,
+    source: shotSource(ly - 3) }; };
+const otSpec = (dir) => { const st = S[dir], m = st.measure, sel = selTxt(dir, st), h = $(`#${dir}-ot`);
+  return { title: `${shotNoun(dir, m)} ${BY_TXT[st.by](dir)}, ${shotYears()}${sel ? `: ${sel}` : ""}`,
+    sub: `${shotWhat(dir, st)}, ${dir === "imp" ? "from" : "to"} every country. Annual, in ${shotUnit(m)}.${h._how ? " " + h._how : ""}`,
+    notes: [m === "price" ? "Years under 1,000 lb are left out." : null,
+      st.by === "species" && m !== "price" ? "In 2018 to 2020, many of Vietnam's frozen fillet shipments were entered as other catfish instead of Pangasius." : null,
+      dir === "imp" && m === "price" && st.by === "species" && (st.species === "all" || +st.species === 0) && chinaNote() ? cap(chinaNote()) + "." : null,
+      shotExp(dir, st), shotPart()], source: shotSource(2005, m !== "lb") }; };
+const priceSpec = () => { const st = S.imp, sel = selTxt("imp", st), cn = (st.species === "all" || +st.species === 0) && chinaNote();
+  return { title: `Average U.S. catfish import price ${st.species === "all" ? "by species" : "by year"}, ${shotYears()}${sel ? `: ${sel}` : ""}`,
+    sub: `Declared customs value per pound, ${S.money === "real" ? `in ${mName(IDX.get(D.cpi.base))} dollars` : "as reported"}. ${shotWhat("imp", st)}, from every country. Annual.`,
+    notes: ["Years under 1,000 lb are left out.", cn ? cap(cn) + "." : null, shotPart()], source: shotSource(2005, true) }; };
+const mapSpec = (dir) => { const st = S[dir], P = period(st), zone = st.zoom, usd = st.measure === "usd", sel = selTxt(dir, st), h = $(`#${dir}-map`);
+  const tot = tally(dir, st, P.cur).tot, b = usd ? "usd" : "lb", amt = usd ? usdTxt : lbTxt, items = h._items || [];
+  const share = (o) => { const p = tot && tot[b] ? (100 * o[b]) / tot[b] : 0; return p > 0 && p < 1 ? "<1%" : `${Math.round(p)}%`; };
+  return { title: `${usd ? `U.S. catfish ${dir === "imp" ? "import" : "export"} value` : `U.S. catfish ${WORD[dir].noun}`} by ${dir === "imp" ? "supplying" : "destination"} country${zone === "World" ? "" : ` in ${zIn(zone)}`}, ${P.label}${sel ? `: ${sel}` : ""}`,
+    sub: `Circle size shows ${usd ? shotUnit("usd") : "pounds (product weight)"}. ${shotWhat(dir, st)}.`,
+    notes: [items.length ? `Largest: ${items.slice(0, 5).map(([c, o]) => `${D.countries[c].name} ${amt(o[b])} (${share(o)})`).join(", ")}. Shares are of all U.S. ${WORD[dir].noun}.` : null],
+    source: shotSource(Math.min(...[...P.cur].map(yr)), usd), maxH: SHOT.MAPH, map: true }; };
+const whoTxt = (dir) => { const st = S[dir]; return st.country != null ? D.countries[st.country].name : st.zoom === "World" ? null : zIn(st.zoom); };
+const yearsSpec = (dir) => { const st = S[dir], m = st.measure, sel = selTxt(dir, st), who = whoTxt(dir);
+  return { title: `${shotNoun(dir, m)} ${WORD[dir].toFrom} ${who} by year, ${shotYears()}${sel ? `: ${sel}` : ""}`,
+    sub: `${shotWhat(dir, st)}. Annual, in ${shotUnit(m)}.`,
+    notes: [m === "price" ? "Years under 1,000 lb are left out." : null, shotExp(dir, st), shotPart()], source: shotSource(2005, m !== "lb") }; };
+const mchartSpec = (dir) => { const st = S[dir], m = st.measure, sel = selTxt(dir, st), who = whoTxt(dir), fy = period(st).focusYear;
+  return { title: `${shotNoun(dir, m)}${who ? ` ${WORD[dir].toFrom} ${who}` : ""} by month: ${vsTxt($(`#${dir}-mchart`))}${sel ? `: ${sel}` : ""}`,
+    sub: `${shotWhat(dir, st)}${who ? "" : `, ${dir === "imp" ? "from" : "to"} every country`}. Monthly, in ${shotUnit(m)}.`,
+    source: shotSource(fy - 3, m !== "lb") }; };
+const SHARE_SPECS = {
+  "month-imp-chart": () => monthSpec("imp"),
+  "month-exp-chart": () => monthSpec("exp"),
+  "imp-ot": () => otSpec("imp"),
+  "exp-ot": () => otSpec("exp"),
+  "imp-price": () => priceSpec(),
+  "imp-map": () => mapSpec("imp"),
+  "exp-map": () => mapSpec("exp"),
+  "imp-years": () => yearsSpec("imp"),
+  "exp-years": () => yearsSpec("exp"),
+  "imp-mchart": () => mchartSpec("imp"),
+  "exp-mchart": () => mchartSpec("exp"),
+};
+// the light theme's colors (every plain :root rule, outside the dark-mode ones), set on the chart drawn for the picture
+const lightTokens = () => {
+  const t = {};
+  for (const sh of document.styleSheets) {
+    let rules; try { rules = sh.cssRules; } catch (e) { continue; }
+    for (const r of rules) if (r.selectorText === ":root") for (const p of r.style) if (p.startsWith("--")) t[p] = r.style.getPropertyValue(p).trim();
+  }
+  return t;
+};
+const tok = (T, c) => { const m = /var\((--[\w-]+)\)/.exec(c || ""); return m ? T[m[1]] : null; };
+// the page's own fonts inside the picture, so it draws in them (a picture can't reach the page's fonts)
+let SHOT_FONTS = null;
+const shotFonts = async () => {
+  if (SHOT_FONTS != null) return SHOT_FONTS;
+  const face = async (fam, file, wt) => {
+    const b = await (await fetch(`fonts/${file}`)).blob();
+    const u = await new Promise((ok, no) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = no; f.readAsDataURL(b); });
+    return `@font-face{font-family:"${fam}";font-weight:${wt};src:url(${u.replace(/^data:[^;,]*/, "data:font/woff2")}) format("woff2")}`;
+  };
+  try { SHOT_FONTS = (await Promise.all([face("Bitter", "bitter-latin-700-normal.woff2", 700), face("Public Sans", "public-sans-latin-400-normal.woff2", 400),
+    face("Public Sans", "public-sans-latin-600-normal.woff2", 600)])).join(""); }
+  catch (e) { SHOT_FONTS = ""; }        // Georgia and Arial then
+  return SHOT_FONTS;
+};
+const xesc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const SHOT_FONT = { title: ['700 22px Bitter, Georgia, serif', 22, 28], sub: ['400 14px "Public Sans", Arial, sans-serif', 14, 20],
+  leg: ['400 13.5px "Public Sans", Arial, sans-serif', 13.5, 22], src: ['400 11.5px "Public Sans", Arial, sans-serif', 11.5, 16],
+  site: ['600 11.5px "Public Sans", Arial, sans-serif', 11.5, 16] };
+const measure = document.createElement("canvas").getContext("2d");
+const wrapText = (text, font, w) => {
+  measure.font = font; const out = []; let cur = "";
+  for (const wd of String(text).split(/\s+/).filter(Boolean)) {
+    const t = cur ? `${cur} ${wd}` : wd;
+    if (cur && measure.measureText(t).width > w) { out.push(cur); cur = wd; } else cur = t;
+  }
+  if (cur) out.push(cur);
+  return out;
+};
+const SHOT_PROPS = ["fill", "fill-opacity", "stroke", "stroke-width", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "stroke-opacity",
+  "opacity", "visibility", "vector-effect", "font-family", "font-size", "font-weight", "font-variant-numeric"];
+async function chartPicture(host, spec) {
+  const { W, PAD, SCALE } = SHOT, IW = W - 2 * PAD, T = lightTokens();
+  await Promise.all(["700 22px Bitter", '400 14px "Public Sans"', '600 14px "Public Sans"'].map((f) => document.fonts.load(f))).catch(() => {});
+  const parts = [], fam = { title: "Bitter, Georgia, serif", body: '"Public Sans", Arial, sans-serif' };
+  const lines = (key, text, y, color, weight) => {
+    const [font, size, lh] = SHOT_FONT[key];
+    for (const ln of wrapText(text, font, IW)) {
+      parts.push(`<text x="${PAD}" y="${(y + size).toFixed(1)}" font-family="${xesc(key === "title" ? fam.title : fam.body)}" font-size="${size}" font-weight="${weight}" fill="${color}">${xesc(ln)}</text>`);
+      y += lh;
+    }
+    return y;
+  };
+  let y = PAD;
+  y = lines("title", spec.title, y, T["--ink"], 700) + 2;
+  y = lines("sub", spec.sub, y, T["--ink-2"], 400) + 8;
+  // the legend, from the one under the chart on the page: lines, the dashed average and the colored squares, in the light colors
+  const items = [...host.querySelectorAll(":scope > ul.keys > li")].map((li) => ({ sw: li.querySelector(".sw"), text: li.textContent.trim() }));
+  if (items.length) {
+    const [font, size, lh] = SHOT_FONT.leg; measure.font = font;
+    let x = PAD;
+    for (const it of items) {
+      const w = 18 + 7 + measure.measureText(it.text).width;
+      if (x > PAD && x + w > W - PAD) { x = PAD; y += lh; }
+      const k = it.sw ? it.sw.classList : { contains: () => false }, cy = y + lh / 2, col = tok(T, it.sw && it.sw.getAttribute("style")) || T["--line-1"];
+      if (k.contains("dash")) parts.push(`<line x1="${x}" x2="${x + 18}" y1="${cy}" y2="${cy}" stroke="${T["--line-2"]}" stroke-width="2" stroke-dasharray="5 3"/>`);
+      else if (k.contains("ln")) parts.push(`<line x1="${x}" x2="${x + 18}" y1="${cy}" y2="${cy}" stroke="${col}" stroke-width="3"/>`);
+      else parts.push(`<rect x="${x + 3}" y="${cy - 6}" width="12" height="12" rx="3" fill="${col}"/>`);
+      parts.push(`<text x="${x + 25}" y="${(cy + size * 0.36).toFixed(1)}" font-family="${xesc(fam.body)}" font-size="${size}" fill="${T["--ink-2"]}">${xesc(it.text)}</text>`);
+      x += w + 18;
+    }
+    y += lh + 6;
+  }
+  // the footer first, so a chart can take the height left to make about 16:9
+  const foot = [];
+  const fy = (key, text, color, weight) => { const n = wrapText(text, SHOT_FONT[key][0], IW).length; foot.push([key, text, color, weight]); return n * SHOT_FONT[key][2]; };
+  let fh = 14 + fy("src", spec.source, T["--ink-2"], 400);
+  for (const n of (spec.notes || []).filter(Boolean)) fh += fy("src", n, T["--ink-2"], 400);
+  fh += 4 + fy("site", `${cap(shotKind(spec))}: ${SHOT_SITE}`, T["--muted"], 600);
+  // the chart, drawn again off screen at the picture's width in the light colors, its styles written onto it
+  const off = el("div", { "aria-hidden": "true",
+    style: `position:fixed;left:-10000px;top:0;width:${IW}px;` + Object.entries(T).map(([k, v]) => `${k}:${v}`).join(";") });
+  document.body.append(off);
+  let svgXml, ch;
+  try {
+    host._redraw(off, Math.max(230, SHOT.H - y - fh - PAD), IW);
+    const svg = off.querySelector("svg");
+    if (!svg) throw new Error("no chart");
+    // a chart's drawing is the picture's width; a map is too, no taller than MAPH, its region centered with the land
+    // around it showing, as on the page
+    const vb = svg.viewBox.baseVal, cw = IW;
+    ch = Math.min(spec.maxH || Infinity, (IW * vb.height) / vb.width);
+    const copy = svg.cloneNode(true), a = [svg, ...svg.querySelectorAll("*")], b = [copy, ...copy.querySelectorAll("*")];
+    a.forEach((n, i) => { const cs = getComputedStyle(n);
+      b[i].setAttribute("style", SHOT_PROPS.map((p) => `${p}:${cs.getPropertyValue(p)}`).join(";")); b[i].removeAttribute("class"); });
+    for (const k of ["role", "aria-label", "tabindex", "height"]) copy.removeAttribute(k);
+    for (const [k, v] of Object.entries({ x: PAD + (IW - cw) / 2, y, width: cw, height: ch, overflow: spec.maxH ? "hidden" : "visible" })) copy.setAttribute(k, v);
+    svgXml = new XMLSerializer().serializeToString(copy);
+  } finally { off.remove(); }
+  y += ch + 14;
+  parts.push(`<line x1="${PAD}" x2="${W - PAD}" y1="${y}" y2="${y}" stroke="${T["--rule"]}" stroke-width="1"/>`);
+  y += 10;
+  for (const [key, text, color, weight] of foot) y = lines(key, text, y, color, weight);
+  const H = Math.ceil(y + PAD - 8);
+  const xml = `<svg xmlns="http://www.w3.org/2000/svg" width="${W * SCALE}" height="${H * SCALE}" viewBox="0 0 ${W} ${H}">` +
+    `<style>${await shotFonts()}</style><rect width="${W}" height="${H}" fill="#ffffff"/>` +   // plain white, no band (Josh, 11/24/2026, on Cattle Auction Prices)
+    parts.join("") + svgXml + "</svg>";
+  const url = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml" }));
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const cv = document.createElement("canvas"); cv.width = W * SCALE; cv.height = H * SCALE;
+    const c = cv.getContext("2d");
+    c.drawImage(img, 0, 0, cv.width, cv.height);
+    await new Promise((r) => setTimeout(r, 150));      // Safari can apply a picture's own fonts a moment after it loads: draw again
+    c.clearRect(0, 0, cv.width, cv.height); c.drawImage(img, 0, 0, cv.width, cv.height);
+    return await new Promise((ok, no) => cv.toBlob((bl) => (bl ? ok(bl) : no(new Error("no picture"))), "image/png"));
+  } finally { URL.revokeObjectURL(url); }
+}
+const SHARE_ICON = '<svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M8 10V2M5 4.8 8 2l3 2.8M4.5 7H3.5v7h9V7h-1"/></svg>';
+// the chart and its share control, side by side in a layout; a map's control also watches the map's circles and view
+function withShare(host, map = false) { return [host, shareControl(host, map)]; }
+function shareControl(host, map = false) {
+  const btn = el("button", { type: "button", class: "cs-btn", "aria-expanded": "false" });
+  const label = `Share this ${map ? "map" : "chart"}`;   // a map's button says map
+  btn.innerHTML = `${SHARE_ICON}<span>${label}</span>`; btn._label = label;
+  const panel = el("div", { class: "cs-panel", hidden: true });
+  const close = () => { panel.hidden = true; if (panel._url) URL.revokeObjectURL(panel._url); panel._url = null; panel.replaceChildren(); btn.setAttribute("aria-expanded", "false"); };
+  btn.addEventListener("click", () => { if (!panel.hidden) { close(); return; } openShare(host, btn, panel, close); });
+  panel.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); btn.focus(); } });
+  // the chart changed: the picture is out of date (a map is redrawn in place, so its circles and view are watched)
+  new MutationObserver(close).observe(host, map ? { childList: true, subtree: true, attributes: true, attributeFilter: ["viewBox"] } : { childList: true });
+  return el("div", { class: "chart-share" }, [btn, panel]);
+}
+async function openShare(host, btn, panel, close) {
+  const make = SHARE_SPECS[host.id];
+  if (!make || !host._redraw || !host.querySelector("svg")) return;
+  const spec = make(), lab = btn.querySelector("span");
+  btn.disabled = true; lab.textContent = "Making the picture…";
+  let blob;
+  try { blob = await chartPicture(host, spec); }
+  catch (e) { console.error(e); panel.replaceChildren(el("p", { class: "note", text: "The picture couldn't be made in this browser." })); panel.hidden = false; return; }
+  finally { btn.disabled = false; lab.textContent = btn._label; }
+  const name = `catfish-trade-${spec.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70).replace(/-$/, "")}-${D.meta.through}.png`;
+  const file = new File([blob], name, { type: "image/png" }), url = URL.createObjectURL(blob);
+  panel._url = url;
+  const msg = el("p", { class: "note cs-msg", role: "status" });
+  const act = (t, f) => el("button", { type: "button", class: "cs-act", text: t, onclick: f });
+  let files = false; try { files = !!(navigator.canShare && navigator.canShare({ files: [file] })); } catch (e) { files = false; }
+  const share = files && act("Share…", async () => {
+    try { await navigator.share({ files: [file], title: spec.title }); }
+    catch (e) { if (!e || e.name !== "AbortError") msg.textContent = "Sharing didn't work here. Use Download, or press and hold the picture."; }
+  });
+  const copy = !!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) && act("Copy image", async () => {
+    try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); msg.textContent = "Copied. Paste it into a slide, document or message."; }
+    catch (e) { msg.textContent = "This browser won't copy pictures. Use Download, or right-click the picture to copy it."; }
+  });
+  const dl = act("Download", () => { const a = el("a", { href: url, download: name }); document.body.append(a); a.click(); a.remove(); });
+  const coarse = matchMedia("(pointer: coarse)").matches;
+  const acts = (coarse ? [share, dl, copy] : [copy, dl, share]).filter(Boolean);
+  panel.replaceChildren(el("img", { class: "cs-img", src: url, alt: `${spec.title}. ${spec.sub}` }),
+    el("div", { class: "cs-acts" }, [...acts, act("Close", () => { close(); btn.focus(); })]),
+    el("p", { class: "note cs-hint", text: coarse ? "Or press and hold the picture to save or copy it." : "Or right-click the picture to copy or save it." }), msg);
+  panel.hidden = false; btn.setAttribute("aria-expanded", "true");
+  acts[0].focus({ preventScroll: true });
+}
+for (const id of ["month-imp-chart", "month-exp-chart"]) { const h = document.getElementById(id); if (h) h.after(shareControl(h)); }
 
 // ---- tabs ----
 const TABS = ["month", "imp", "exp", "about"];
@@ -1237,6 +1510,7 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     const t = e.target.closest('[role="tab"]');
     if (t) count(`${tool}: ${(t.querySelector(".l") || t).textContent.trim()}`);   // the long label where a tab has two
     if (e.target.closest("#share-view")) count(`${tool}: share`);
+    if (e.target.closest(".cs-btn")) count(`${tool}: share chart`);
   });
 })();
 </script>

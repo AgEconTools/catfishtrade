@@ -71,7 +71,7 @@ a { color: var(--link); }
 /* "Skip to content": off screen until the keyboard reaches it */
 .skip { position: absolute; left: 16px; top: -200px; z-index: 30; background: var(--surface); color: var(--ink); border: 1px solid var(--rule); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
 .skip:focus { top: calc(8px + env(safe-area-inset-top, 0px)); }
-main:focus { outline: none; }
+main:focus, #disclaimer:focus { outline: none; }
 .num { font-variant-numeric: tabular-nums; }
 
 /* masthead */
@@ -1501,6 +1501,17 @@ Promise.all(["data/catfish.json", "data/world.json"].map((u) => fetch(u, { cache
     field.addEventListener("focus", () => field.select());
     field.addEventListener("keydown", (e) => { if (e.key === "Escape") { hideBox(); btn.focus(); } });
   }
+  // The header's "Read the disclaimer" and the "Skip to content" link scroll to their target without changing the
+  // address (11/26/2026, from the drought tracker): a #disclaimer address dropped the tab and country, so Share
+  // right after sent a link that opened Latest month instead of the view on screen. Focus moves to the target,
+  // as following the link would, for keyboard and screen reader users.
+  document.querySelectorAll('a.skip[href^="#"], .edu a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
+    const t = document.querySelector(a.getAttribute("href")); if (!t) return;
+    e.preventDefault();
+    t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    if (!t.hasAttribute("tabindex")) t.setAttribute("tabindex", "-1");
+    t.focus({ preventScroll: true });
+  }));
 })();
 
 // Visit counts (GoatCounter): which tabs people open and how often they share, as plain events with no
